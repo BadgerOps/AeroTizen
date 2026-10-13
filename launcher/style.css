@@ -1,0 +1,95 @@
+/* Visual language modelled on LTvLauncher: true black, white type, banner tiles, violet focus ring. */
+:root {
+  --bg: #000;
+  --fg: #fff;
+  --muted: #b8b8c0;
+  --card: #1c1c1e;
+  --focus: #7c5cff;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 1920px; height: 1080px; overflow: hidden;
+  background: var(--bg); color: var(--fg);
+  font-family: "Roboto", "SamsungOne", "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- top bar ---- */
+.topbar { display: flex; justify-content: space-between; align-items: center; height: 112px; padding: 0 64px; }
+.topbar-left, .topbar-right { display: flex; align-items: center; gap: 28px; }
+.icon-btn { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--fg); }
+.icon-btn svg { width: 40px; height: 40px; }
+.status-icon { width: 40px; height: 40px; color: var(--fg); }
+.status-text { font-size: 34px; font-weight: 500; }
+.date { font-size: 36px; font-weight: 400; }
+.time { font-size: 36px; font-weight: 700; }
+
+/* ---- rows ---- */
+main { padding: 8px 0 0 64px; }
+.row-wrap { margin-bottom: 30px; overflow: visible; }
+h2 { font-size: 39px; font-weight: 500; margin: 0 0 18px; }
+.row { display: flex; gap: 22px; transition: transform .22s ease-out; will-change: transform; }
+
+.tile {
+  position: relative; flex: 0 0 auto; border-radius: 10px; overflow: hidden;
+  display: flex; align-items: center; justify-content: center; gap: 22px;
+  background: var(--card);
+  transform: translateZ(0);
+  transition: transform .15s ease-out;
+}
+.big .tile { width: 474px; height: 267px; }
+.medium .tile { width: 333px; height: 187px; }
+.small .tile { width: 228px; height: 129px; justify-content: flex-start; padding: 0 20px; gap: 18px; }
+
+.tile .logo { flex: 0 0 auto; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,.35)); }
+.big .tile .logo { width: 132px; height: 132px; }
+.medium .tile .logo { width: 92px; height: 92px; }
+.small .tile .logo, .small .tile svg { width: 64px; height: 64px; border-radius: 10px; }
+
+.tile .name { font-weight: 500; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.35); max-width: 60%; line-height: 1.1; }
+.big .tile .name { font-size: 50px; }
+.medium .tile .name { font-size: 36px; }
+.small .tile .name { font-size: 26px; font-weight: 400; color: #e6e6ea; max-width: 120px; }
+.tile.nologo .name { max-width: 88%; text-align: center; }
+.big .tile.nologo .name { font-size: 64px; font-weight: 700; }
+.medium .tile.nologo .name { font-size: 46px; font-weight: 700; }
+
+/* decorative swooshes like LTvLauncher's banner art */
+.tile .swoosh { position: absolute; border-radius: 50%; background: rgba(255,255,255,.07); pointer-events: none; }
+.tile .s1 { width: 70%; height: 140%; right: -28%; top: -60%; }
+.tile .s2 { width: 50%; height: 100%; left: -22%; bottom: -62%; background: rgba(0,0,0,.18); }
+
+.focused {
+  transform: translateZ(0) scale(1.045);
+  box-shadow: 0 0 0 4px var(--bg), 0 0 0 9px var(--focus), 0 18px 40px rgba(0,0,0,.6);
+  z-index: 2;
+}
+.icon-btn.focused { transform: none; box-shadow: 0 0 0 4px var(--focus); background: rgba(124,92,255,.18); }
+
+.tile.fire { background: radial-gradient(110% 120% at 50% 110%, #ff8a1e 0%, #c2380d 35%, #3a0d04 70%, #120402 100%); }
+.tile.fire svg.flame { width: 120px; height: 120px; }
+.medium .tile.fire svg.flame { width: 84px; height: 84px; }
+
+/* ---- favorites editor ---- */
+.sheet { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #000; padding: 72px 64px; }
+.sheet h2 { font-size: 52px; font-weight: 700; margin-bottom: 8px; }
+.hint { color: var(--muted); font-size: 28px; margin-bottom: 40px; }
+.grid { display: flex; flex-wrap: wrap; gap: 26px 22px; width: 1792px; }
+.grid .tile { width: 333px; height: 187px; }
+.grid .tile .logo { width: 92px; height: 92px; }
+.grid .tile .name { font-size: 34px; }
+.grid .tile.on::after {
+  content: ""; position: absolute; top: 12px; right: 12px; width: 40px; height: 40px; border-radius: 50%;
+  background: var(--focus) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='white' d='M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z'/%3E%3C/svg%3E") center/26px no-repeat;
+}
+
+/* ---- fireplace fallback ---- */
+.fireplace { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #000; }
+.fireplace canvas { position: absolute; left: 0; bottom: 0; width: 1920px; height: 1080px; filter: blur(2.5px) saturate(1.15); }
+.hearth { position: absolute; left: 0; right: 0; bottom: 0; height: 120px; background: linear-gradient(to top, #050302 30%, rgba(5,3,2,0)); }
+.fire-volume { position: absolute; top: 60px; right: 80px; padding: 14px 28px; border-radius: 999px; background: rgba(0,0,0,.55); font-size: 26px; opacity: 0; transition: opacity .2s; }
+.fire-volume.show { opacity: 1; }
+
+.toast { position: fixed; left: 50%; bottom: 60px; transform: translateX(-50%); padding: 18px 34px; border-radius: 12px; background: #1c1c1e; font-size: 26px; }

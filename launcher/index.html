@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1920, height=1080">
+  <title>Home</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Layout and look follow LTvLauncher (GPL-3.0, github.com/leanbitlab-org/LtvLauncher). -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div id="gear" class="icon-btn" data-row="0" aria-label="Choose favorites">
+        <svg viewBox="0 0 24 24"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3h-4l-.4 2.9a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1L11 21h4l.4-2.9a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM13 15.5A3.5 3.5 0 1 1 13 8.5a3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg>
+      </div>
+      <svg class="status-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M12 18.5a1.8 1.8 0 1 0 0 3.6 1.8 1.8 0 0 0 0-3.6zM5.6 13.4l1.8 1.8a6.5 6.5 0 0 1 9.2 0l1.8-1.8a9 9 0 0 0-12.8 0zM2 9.8l1.8 1.8a11.6 11.6 0 0 1 16.4 0L22 9.8a14.1 14.1 0 0 0-20 0z"/></svg>
+      <span id="source" class="status-text"></span>
+    </div>
+    <div class="topbar-right">
+      <span id="date" class="date"></span>
+      <span id="time" class="time"></span>
+    </div>
+  </header>
+
+  <main id="rows">
+    <section class="row-wrap">
+      <h2>Favorites</h2>
+      <div id="favorites" class="row big"></div>
+    </section>
+    <section class="row-wrap">
+      <h2>Apps</h2>
+      <div id="apps" class="row medium"></div>
+    </section>
+    <section class="row-wrap">
+      <h2>Inputs</h2>
+      <div id="inputs" class="row small"></div>
+    </section>
+  </main>
+
+  <div id="editor" class="sheet" hidden>
+    <h2>Favorites</h2>
+    <p class="hint">OK adds or removes an app from Favorites. Back to finish.</p>
+    <div id="all-apps" class="grid"></div>
+  </div>
+
+  <div id="fireplace" class="fireplace" hidden>
+    <canvas id="fire-canvas"></canvas>
+    <div class="hearth"></div>
+    <div id="fire-volume" class="fire-volume"></div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="fireplace.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
