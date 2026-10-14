@@ -98,7 +98,7 @@ Samsung doesn't allow third-party home screens, so the launcher reclaims the scr
 | Back out of any app | back to the launcher |
 | Home inside **stock YouTube** | Samsung Home. Samsung's YouTube hides its state from on-device apps; TizenTube doesn't have this problem |
 | Source key inside an app | may bring the launcher up over the input; use the Inputs row instead |
-| TV power-on | service is registered to start at boot and open the launcher (accepted by the TV; not yet confirmed across a full power cycle) |
+| TV power-on (incl. after unplugging) | the launcher is the first screen |
 
 Preview it in a desktop browser: `python3 -m http.server -d launcher`.
 
