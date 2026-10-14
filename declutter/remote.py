@@ -79,6 +79,15 @@ class Remote:
                 "TypeOfRemote": "SendRemoteKey"}}))
             time.sleep(delay)
 
+    def hold(self, key, seconds=1.0):
+        """Press and hold a remote button (e.g. a long-press on OK)."""
+        def send(cmd):
+            self.ws.send(json.dumps({"method": "ms.remote.control", "params": {
+                "Cmd": cmd, "DataOfCmd": key, "Option": "false", "TypeOfRemote": "SendRemoteKey"}}))
+        send("Press")
+        time.sleep(seconds)
+        send("Release")
+
     def keys(self, sequence, delay=0.6):
         """Send a list like ["KEY_HOME", ("KEY_DOWN", 3), "KEY_ENTER"]."""
         for step in sequence:

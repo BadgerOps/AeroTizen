@@ -238,6 +238,105 @@ class Sdb:
             i += 8 + n
         return bytes(data)
 
+    def forward(self, local_port, remote_port):
+        """Serve localhost:local_port, tunnelling each connection to the TV's remote_port.
+
+        The TV accepts only one sdb connection at a time, so every tunnelled stream is
+        multiplexed over this one; a single reader thread routes frames by stream id.
+        Blocks forever.
+        """
+        import threading
+
+        send_lock = threading.Lock()
+        streams = {}  # local id -> {"client", "rid", "acked", "opened"}
+
+        def send(cmd, a0, a1, payload=b""):
+            with send_lock:
+                self._send(cmd, a0, a1, payload)
+
+        def reader():
+            while True:
+                cmd, a0, a1, payload = self._recv()
+                st = streams.get(a1)
+                if st is None:
+                    continue
+                if cmd == OKAY:
+                    if st["rid"] is None:
+                        st["rid"] = a0
+                        st["opened"].set()
+                    st["acked"].set()
+                elif cmd == WRTE:
+                    try:
+                        st["client"].sendall(payload)
+                    except OSError:
+                        pass
+                    send(OKAY, a1, a0)
+                elif cmd == CLSE:
+                    st["opened"].set()
+                    streams.pop(a1, None)
+                    try:
+                        st["client"].close()
+                    except OSError:
+                        pass
+
+        def serve(client):
+            with send_lock:
+                lid = self._next_id
+                self._next_id += 1
+            st = {"client": client, "rid": None, "acked": threading.Event(), "opened": threading.Event()}
+            streams[lid] = st
+            send(OPEN, lid, 0, f"tcp:{remote_port}\0".encode())
+            st["opened"].wait(15)
+            if st["rid"] is None:
+                client.close()
+                return
+            st["acked"].set()
+            try:
+                while True:
+                    data = client.recv(self.max_data - 64)
+                    if not data:
+                        break
+                    st["acked"].wait()
+                    st["acked"].clear()
+                    if lid not in streams:
+                        break
+                    send(WRTE, lid, st["rid"], data)
+            except OSError:
+                pass
+            if streams.pop(lid, None) is not None:
+                send(CLSE, lid, st["rid"])
+
+        self.sock.settimeout(None)
+        threading.Thread(target=reader, daemon=True).start()
+        server = socket.socket()
+        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server.bind(("127.0.0.1", local_port))
+        server.listen(8)
+        while True:
+            client, _addr = server.accept()
+            threading.Thread(target=serve, args=(client,), daemon=True).start()
+
+    def debug_launch(self, app_id):
+        """Launch an app with the web inspector enabled; returns the inspector port."""
+        # The TV keeps this stream open, so read until the port appears rather than to EOF.
+        import re
+        lid = self._next_id
+        self._next_id += 1
+        self._send(OPEN, lid, 0, f"shell:0 debug {app_id}\0".encode())
+        out = b""
+        while True:
+            cmd, a0, a1, payload = self._recv()
+            if a1 != lid:
+                continue
+            if cmd == WRTE:
+                out += payload
+                self._send(OKAY, lid, a0)
+                m = re.search(rb"port\s*:\s*(\d+)", out)
+                if m:
+                    return int(m.group(1))
+            elif cmd == CLSE:
+                raise SdbError(f"debug launch failed: {out.decode(errors='replace').strip()[-200:]}")
+
     def install(self, app_id, wgt_bytes, tool_path):
         remote = f"{tool_path}/{app_id.split('.')[0]}.wgt"
         self.push(wgt_bytes, remote)
