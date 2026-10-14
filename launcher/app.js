@@ -37,35 +37,21 @@
   var $ = function (id) { return document.getElementById(id); };
   var allApps = [], favorites = [], appOrder = [], sources = [], background = 'black';
   var FIRE = '__fire';
-  var rows = [], row = 1, col = [0, 0, 0, 0];
+  var rows = [], row = 1, col = [];
   var editing = false, editIndex = 0;
 
   // ---- storage -------------------------------------------------------------
   function load() {
     try {
       var s = JSON.parse(localStorage.getItem(STORE)) || {};
-      favorites = s.favorites || []; appOrder = s.order || []; background = s.background || 'black';
+      favorites = s.favorites || []; appOrder = s.order || []; background = s.background || 'aurora';
     } catch (e) {}
   }
   function save() {
     try { localStorage.setItem(STORE, JSON.stringify({ favorites: favorites, order: appOrder, background: background })); } catch (e) {}
   }
 
-  // ---- backgrounds: a small curated set, all pure CSS (no images to load) ---------
-  var BACKGROUNDS = [
-    { id: 'black', name: 'Black', css: '#000' },
-    { id: 'midnight', name: 'Midnight', css: 'radial-gradient(1500px 900px at 15% -10%, #1d2a52 0%, rgba(29,42,82,0) 60%), #04060c' },
-    { id: 'aurora', name: 'Aurora', css: 'radial-gradient(1100px 700px at 85% 0%, rgba(42,157,143,.45) 0%, rgba(42,157,143,0) 60%), radial-gradient(1000px 800px at 0% 100%, rgba(106,76,200,.40) 0%, rgba(106,76,200,0) 60%), #05060b' },
-    { id: 'ember', name: 'Ember', css: 'radial-gradient(1400px 800px at 85% 115%, #4a1a08 0%, rgba(74,26,8,0) 60%), #0a0605' },
-    { id: 'forest', name: 'Forest', css: 'radial-gradient(1400px 900px at 10% 110%, #0f3324 0%, rgba(15,51,36,0) 60%), #040907' },
-    { id: 'dusk', name: 'Dusk', css: 'linear-gradient(160deg, #2a1838 0%, #12101c 45%, #07070b 100%)' },
-    { id: 'graphite', name: 'Graphite', css: 'linear-gradient(180deg, #202126 0%, #0c0c0e 100%)' }
-  ];
-  function applyBackground() {
-    var b = BACKGROUNDS.filter(function (x) { return x.id === background; })[0] || BACKGROUNDS[0];
-    document.documentElement.style.background = b.css;
-    document.body.style.background = b.css;
-  }
+  function applyBackground() { window.Backgrounds.apply(background); }
 
   // ---- clock ---------------------------------------------------------------
   function tick() {
@@ -159,9 +145,7 @@
       t.dataset.id = id; fav.appendChild(t);
     });
 
-    var apps = $('apps'); apps.textContent = '';
-    otherApps().forEach(function (a) { var t = banner(a); t.dataset.id = a.id; apps.appendChild(t); });
-    apps.parentNode.hidden = !apps.children.length;
+    // Home is just the favorites grid; every other app can be added from Settings.
     buildRows();
   }
 
@@ -201,7 +185,6 @@
       if (!s.connected) { el.classList.add('off'); }
       box.appendChild(el);
     });
-    $('source').textContent = current ? (current.editName || sourceName(current)) : 'Connected';
     buildRows();
   }
 
@@ -242,10 +225,8 @@
   }
 
   // ---- be the home screen --------------------------------------------------
-  // Samsung doesn't let third-party apps register as Home, so the launcher reclaims the
-  // screen itself: if it's hidden without having opened anything (Home pressed here), or the
-  // app it opened stops being visible (Home pressed inside that app), it relaunches itself.
-  // App state comes from the TV's local API on port 8001.
+  // Samsung doesn't let third-party apps register as Home. The background service
+  // (service/index.js) reclaims the screen; the launcher tells it what it opens.
   var watched = null, seenVisible = false, leaving = false;
   // Small ring buffer of home-takeover decisions, readable from the web inspector.
   var homeLog = window.__homeLog = (function () { try { return JSON.parse(localStorage.getItem('declutter.log')) || []; } catch (e) { return []; } })();
@@ -261,36 +242,6 @@
     tellService('/watch?id=' + encodeURIComponent(PRELOADED[appId] || appId));
   }
 
-  function comeBack() {
-    if (leaving || !tz || !document.hidden) { return; }
-    note('come back (watched=' + watched + ')');
-    watched = null;
-    tz.application.launch(SELF, null, function (e) { note('relaunch failed ' + (e && e.message)); });
-  }
-
-  function status(id, cb) {
-    var x = new XMLHttpRequest();
-    x.open('GET', 'http://127.0.0.1:8001/api/v2/applications/' + encodeURIComponent(PRELOADED[id] || id));
-    x.timeout = 800;
-    x.onload = function () { var s = null; try { s = JSON.parse(x.responseText); } catch (e) {} cb(s && s.running !== undefined ? s : null); };
-    x.onerror = x.ontimeout = function () { cb(null); };
-    x.send();
-  }
-
-  // Which of the user's apps are running right now: { id: running }.
-  function snapshot(cb) {
-    var out = {}, left = allApps.length;
-    if (!left) { return cb(out); }
-    allApps.forEach(function (a) {
-      status(a.id, function (s) { out[a.id] = !!(s && s.running); if (--left === 0) { cb(out); } });
-    });
-  }
-  var lastRunning = {};
-  function refreshSnapshot() { if (tz && !document.hidden) { snapshot(function (r) { lastRunning = r; }); } }
-  setInterval(refreshSnapshot, 8000);
-
-  // Home pressed inside an app we opened: only trust a visible -> hidden transition
-  // (YouTube always reports visible=false, so for it this simply never fires).
   // Watching apps after they open is done by the background service (service/index.js):
   // hidden web apps are frozen on retail TVs, services aren't.
   var SERVICE = 'http://127.0.0.1:47790';
@@ -307,23 +258,15 @@
     } catch (e) { note('service start threw ' + e.message); }
   }
 
-  // Home pressed on the launcher itself: we were hidden without opening anything.
-  // Before reclaiming the screen, make sure nothing else just started (a cast from a phone,
-  // a notification): if an app that wasn't running a moment ago is running now, stand aside.
+  // The service decides when to reclaim the screen; the launcher just reports what it's doing.
   document.addEventListener('visibilitychange', function () {
     note('visibility hidden=' + document.hidden + ' watched=' + watched);
-    if (!document.hidden) { watched = null; refreshSnapshot(); tellService('/home'); return; }
-    if (watched || leaving || !tz) { return; }
-    setTimeout(function () {
-      if (watched || !document.hidden) { return; }
-      snapshot(function (now) {
-        for (var id in now) {
-          if (now[id] && !lastRunning[id]) { note('stand aside: ' + id + ' started'); watch(id); return; }
-        }
-        comeBack();
-      });
-    }, 350);
+    if (!document.hidden) { watched = null; tellService('/home'); }
   });
+
+  function reportApps() {
+    tellService('/apps?ids=' + allApps.map(function (a) { return encodeURIComponent(PRELOADED[a.id] || a.id); }).join(','));
+  }
 
   function useSamsungHome() {
     leaving = true; tellService('/leave');
@@ -338,7 +281,7 @@
       tz.tvwindow.setSource(s.raw || s, function () {
         tz.tvwindow.show(function () {
           watchingTv = true; document.body.classList.add('tv');
-          document.documentElement.style.background = document.body.style.background = 'transparent';
+          document.documentElement.style.background = document.body.style.background = 'transparent'; window.Backgrounds.hide();
         }, function () { toast('Could not show ' + sourceName(s)); }, ['0px', '0px', '1920px', '1080px'], 'MAIN');
         renderInputs();
       }, function () { toast('Could not switch input'); }, 'MAIN');
@@ -374,9 +317,15 @@
     x.send('v=' + FIRE_VIDEO);
   }
 
-  // ---- focus ---------------------------------------------------------------
+  // ---- focus: gear, then the app grid (3 per row), then inputs ----------------
+  var PER_ROW = 3, scrollY = 0;
+  function gridTiles() { return [].slice.call($('favorites').children); }
+
   function buildRows() {
-    rows = [[$('gear')], $('favorites').children, $('apps').children, $('inputs').children];
+    var tiles = gridTiles(), grid = [];
+    for (var i = 0; i < tiles.length; i += PER_ROW) { grid.push(tiles.slice(i, i + PER_ROW)); }
+    rows = [[$('gear')]].concat(grid, [[].slice.call($('inputs').children)]);
+    for (var r = 0; r < rows.length; r++) { if (col[r] === undefined) { col[r] = 0; } }
     focus();
   }
 
@@ -388,39 +337,49 @@
   function focus() {
     clearFocus();
     if (editing) { return focusEditor(); }
-    while (row > 0 && (!rows[row] || !rows[row].length)) { row--; }
+    row = Math.max(0, Math.min(row, rows.length - 1));
+    while (row > 0 && !rows[row].length) { row--; }
     var list = rows[row];
-    col[row] = Math.max(0, Math.min(col[row], list.length - 1));
+    col[row] = Math.max(0, Math.min(col[row] || 0, list.length - 1));
     var el = list[col[row]];
     el.classList.add('focused');
-    if (row > 0) {
-      // Slide the row so the focused tile stays on screen; transforms only, cheap on TV GPUs.
-      var strip = el.parentNode, visible = 1920 - 64 - 40;
-      var shift = Math.max(0, el.offsetLeft + el.offsetWidth - visible);
-      strip.style.transform = 'translate3d(' + (-shift) + 'px,0,0)';
-    }
+    // Keep the focused row on screen (only matters with more than 6 apps); transform only.
+    var top = el.offsetTop - scrollY, bottom = top + el.offsetHeight;
+    if (row <= 1) { scrollY = 0; }
+    else if (bottom > 1040) { scrollY += bottom - 1040; }
+    else if (top < 140) { scrollY -= 140 - top; }
+    $('rows').style.transform = 'translate3d(0,' + (-scrollY) + 'px,0)';
+  }
+
+  function moveFocus(dr) {
+    var c = col[row] || 0, r = row + dr;
+    while (r > 0 && r < rows.length && !rows[r].length) { r += dr; }
+    if (r < 0 || r >= rows.length) { return; }
+    row = r; col[row] = c; focus();
   }
 
   // ---- hold OK to move a tile ----------------------------------------------
-  // A short press opens the tile; holding OK lifts it, Left/Right moves it, OK or Back drops it.
+  // A short press opens the tile; holding OK lifts it, the arrows move it, OK or Back drops it.
   var moving = null, pressTimer = null, pressHandled = false;
 
   function startMove() {
-    if (row !== 1 && row !== 2) { return false; }
-    moving = rows[row][col[row]];
-    moving.classList.add('moving');
-    toast('Move with ◀ ▶, press OK to drop');
+    var el = rows[row][col[row]];
+    if (!el || el.parentNode !== $('favorites')) { return false; }
+    moving = el; moving.classList.add('moving');
+    toast('Move with the arrows, press OK to drop');
     return true;
   }
-  function stepMove(dir) {
-    var strip = moving.parentNode, kids = [].slice.call(strip.children), i = kids.indexOf(moving), j = i + dir;
-    if (j < 0 || j >= kids.length) { return; }
-    if (dir > 0) { strip.insertBefore(kids[j], moving); } else { strip.insertBefore(moving, kids[j]); }
-    col[row] = j; buildRows(); moving.classList.add('moving');
+  function stepMove(delta) {
+    var tiles = gridTiles(), i = tiles.indexOf(moving), j = Math.max(0, Math.min(tiles.length - 1, i + delta));
+    if (j === i) { return; }
+    var grid = $('favorites');
+    grid.removeChild(moving);
+    grid.insertBefore(moving, gridTiles()[j] || null);
+    row = 1 + Math.floor(j / PER_ROW); col[row] = j % PER_ROW;
+    buildRows(); moving.classList.add('moving');
   }
   function endMove() {
-    var ids = [].slice.call(moving.parentNode.children).map(function (t) { return t.dataset.id; });
-    if (moving.parentNode === $('favorites')) { favorites = ids; } else { appOrder = ids; }
+    favorites = gridTiles().map(function (t) { return t.dataset.id; });
     moving.classList.remove('moving'); moving = null; save();
     $('toast').hidden = true;
   }
@@ -432,9 +391,10 @@
 
   function renderEditor() {
     var bgs = $('backgrounds'); bgs.textContent = '';
-    BACKGROUNDS.forEach(function (b) {
+    window.Backgrounds.list.forEach(function (b) {
       var sw = document.createElement('div'); sw.className = 'swatch' + (b.id === background ? ' on' : '');
-      sw.style.background = b.css; sw.innerHTML = '<span></span>'; sw.firstChild.textContent = b.name;
+      sw.style.background = window.Backgrounds.preview(b);
+      sw.innerHTML = '<span></span>' + (b.anim ? '<em>Animated</em>' : ''); sw.firstChild.textContent = b.name;
       sw.onclick = function () { background = b.id; applyBackground(); save(); renderEditor(); };
       bgs.appendChild(sw);
     });
@@ -454,7 +414,9 @@
   function editorRows() {
     var apps = [].slice.call($('all-apps').children), grid = [];
     for (var i = 0; i < apps.length; i += 5) { grid.push(apps.slice(i, i + 5)); }
-    return [[].slice.call($('backgrounds').children)].concat(grid, [[$('escape')]]);
+    var sw = [].slice.call($('backgrounds').children), swRows = [];
+    for (var j = 0; j < sw.length; j += 8) { swRows.push(sw.slice(j, j + 8)); }
+    return swRows.concat(grid, [[$('escape')]]);
   }
   function focusEditor() {
     clearFocus();
@@ -496,6 +458,8 @@
     if (moving) {
       if (k === KEY.LEFT) { stepMove(-1); }
       else if (k === KEY.RIGHT) { stepMove(1); }
+      else if (k === KEY.UP) { stepMove(-PER_ROW); }
+      else if (k === KEY.DOWN) { stepMove(PER_ROW); }
       else if (k === KEY.ENTER || k === KEY.BACK || k === KEY.ESC) { e.preventDefault(); pressHandled = true; endMove(); }
       return;
     }
@@ -505,12 +469,11 @@
       pressTimer = setTimeout(function () { pressTimer = null; pressHandled = startMove(); }, 600);
       return;
     }
-    if (k === KEY.LEFT) { col[row]--; }
-    else if (k === KEY.RIGHT) { col[row]++; }
-    else if (k === KEY.UP) { do { row--; } while (row > 0 && !rows[row].length); row = Math.max(0, row); }
-    else if (k === KEY.DOWN) { var r = row; do { r++; } while (r < rows.length && !rows[r].length); if (r < rows.length) { row = r; } }
-    else if (k === KEY.BACK) { e.preventDefault(); return; }
-    focus();
+    if (k === KEY.LEFT) { col[row]--; focus(); }
+    else if (k === KEY.RIGHT) { col[row]++; focus(); }
+    else if (k === KEY.UP) { moveFocus(-1); }
+    else if (k === KEY.DOWN) { moveFocus(1); }
+    else if (k === KEY.BACK) { e.preventDefault(); }
   });
 
   document.addEventListener('keyup', function (e) {
@@ -528,7 +491,7 @@
   load(); applyBackground(); tick(); setInterval(tick, 10000);
   loadApps(function () {
     if (!favorites.length) { favorites = [FIRE].concat(pickDefaults()); save(); }
-    renderRows(); loadSources(); refreshSnapshot(); startService();
+    renderRows(); loadSources(); startService(); setTimeout(reportApps, 1500);
   });
   document.addEventListener('visibilitychange', function () { if (!document.hidden) { tick(); loadSources(); } });
 })();

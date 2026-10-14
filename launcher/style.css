@@ -11,10 +11,29 @@
 
 html, body {
   width: 1920px; height: 1080px; overflow: hidden;
-  background: var(--bg); color: var(--fg);
+  color: var(--fg);
   font-family: "Roboto", "SamsungOne", "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+
+/* ---- background layer ---- */
+.bg { position: fixed; top: 0; left: 0; width: 1920px; height: 1080px; overflow: hidden; z-index: -1; pointer-events: none; }
+.bg-blob { position: absolute; border-radius: 50%; will-change: transform; animation-timing-function: ease-in-out; animation-iteration-count: infinite; animation-direction: alternate; }
+.bg-drift0 { animation-name: drift0; animation-duration: 26s; }
+.bg-drift1 { animation-name: drift1; animation-duration: 32s; }
+.bg-drift2 { animation-name: drift2; animation-duration: 38s; }
+.bg-drift3 { animation-name: drift3; animation-duration: 30s; }
+.bg-slow { animation-duration: 70s; }
+@keyframes drift0 { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(420px,180px,0) scale(1.25); } }
+@keyframes drift1 { from { transform: translate3d(0,0,0) scale(1.1); } to { transform: translate3d(-480px,-140px,0) scale(.9); } }
+@keyframes drift2 { from { transform: translate3d(0,0,0) scale(.9); } to { transform: translate3d(360px,-220px,0) scale(1.2); } }
+@keyframes drift3 { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(-300px,260px,0) scale(1.15); } }
+.bg-canvas { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; }
+.bg-wave { position: absolute; left: 0; bottom: 0; width: 3840px; height: 260px; will-change: transform; animation: waves linear infinite; }
+.bg-wave svg { width: 3840px; height: 260px; display: block; }
+.bg-wave1 { animation-duration: 28s; bottom: 40px; }
+.bg-wave2 { animation-duration: 18s; }
+@keyframes waves { from { transform: translate3d(0,0,0); } to { transform: translate3d(-1920px,0,0); } }
 
 /* ---- top bar ---- */
 .topbar { display: flex; justify-content: space-between; align-items: center; height: 112px; padding: 0 64px; }
@@ -27,7 +46,7 @@ html, body {
 .time { font-size: 36px; font-weight: 700; }
 
 /* ---- rows ---- */
-main { padding: 8px 0 0 64px; }
+main { padding: 8px 64px 0; transition: transform .22s ease-out; will-change: transform; }
 .row-wrap { margin-bottom: 30px; overflow: visible; }
 h2 { font-size: 39px; font-weight: 500; margin: 0 0 18px; }
 .row { display: flex; gap: 22px; transition: transform .22s ease-out; will-change: transform; }
@@ -39,25 +58,26 @@ h2 { font-size: 39px; font-weight: 500; margin: 0 0 18px; }
   transform: translateZ(0);
   transition: transform .15s ease-out;
 }
-.big .tile { width: 474px; height: 267px; }
+.grid3 { display: flex; flex-wrap: wrap; gap: 30px 32px; margin: 6px 0 40px; }
+.grid3 .tile { width: 576px; height: 300px; }
 .medium .tile { width: 333px; height: 187px; }
 .small .tile { width: 228px; height: 129px; justify-content: flex-start; padding: 0 20px; gap: 18px; }
 
 .tile .logo { flex: 0 0 auto; object-fit: contain; }
-.big .tile .logo { width: 120px; height: 120px; }
+.grid3 .tile .logo { width: 150px; height: 150px; }
 .medium .tile .logo { width: 84px; height: 84px; }
 /* Logo-only banners (Netflix, Prime Video, Max...): the logo is the wordmark, so it fills the tile. */
-.big .tile.logo-only .logo { width: 300px; height: 150px; }
+.grid3 .tile.logo-only .logo { width: 380px; height: 190px; }
 .medium .tile.logo-only .logo { width: 210px; height: 106px; }
 .grid .tile.logo-only .logo { width: 210px; height: 106px; }
 .small .tile .logo, .small .tile svg { width: 64px; height: 64px; border-radius: 10px; }
 
 .tile .name { font-weight: 500; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.35); max-width: 60%; line-height: 1.1; }
-.big .tile .name { font-size: 50px; }
+.grid3 .tile .name { font-size: 60px; }
 .medium .tile .name { font-size: 36px; }
 .small .tile .name { font-size: 26px; font-weight: 400; color: #e6e6ea; max-width: 120px; }
 .tile.nologo .name { max-width: 88%; text-align: center; }
-.big .tile.nologo .name { font-size: 64px; font-weight: 700; }
+.grid3 .tile.nologo .name { font-size: 72px; font-weight: 700; }
 .medium .tile.nologo .name { font-size: 46px; font-weight: 700; }
 
 /* decorative swooshes like LTvLauncher's banner art */
@@ -66,14 +86,14 @@ h2 { font-size: 39px; font-weight: 500; margin: 0 0 18px; }
 .tile .s2 { width: 50%; height: 100%; left: -22%; bottom: -62%; background: rgba(0,0,0,.18); }
 
 .focused {
-  transform: translateZ(0) scale(1.045);
+  transform: translateZ(0) scale(1.035);
   box-shadow: 0 0 0 4px var(--bg), 0 0 0 9px var(--focus), 0 18px 40px rgba(0,0,0,.6);
   z-index: 2;
 }
 .icon-btn.focused { transform: none; box-shadow: 0 0 0 4px var(--focus); background: rgba(124,92,255,.18); }
 
 .tile.fire { background: radial-gradient(110% 120% at 50% 110%, #ff8a1e 0%, #c2380d 35%, #3a0d04 70%, #120402 100%); }
-.tile.fire svg.flame { width: 120px; height: 120px; }
+.tile.fire svg.flame { width: 140px; height: 140px; }
 .medium .tile.fire svg.flame { width: 84px; height: 84px; }
 
 /* ---- favorites editor ---- */
@@ -83,11 +103,12 @@ h2 { font-size: 39px; font-weight: 500; margin: 0 0 18px; }
 .hint { color: var(--muted); font-size: 24px; margin: -6px 0 26px; }
 
 /* background swatches */
-.swatches { display: flex; gap: 22px; margin-bottom: 48px; }
+.swatches { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 40px; width: 1792px; }
 .swatch {
-  position: relative; width: 220px; height: 124px; border-radius: 10px; overflow: hidden;
+  position: relative; width: 208px; height: 117px; border-radius: 10px; overflow: hidden;
   box-shadow: inset 0 0 0 2px rgba(255,255,255,.12); transition: transform .15s ease-out;
 }
+.swatch em { position: absolute; left: 12px; top: 8px; font-size: 16px; font-style: normal; color: #fff; background: rgba(0,0,0,.45); padding: 2px 8px; border-radius: 6px; }
 .swatch span { position: absolute; left: 14px; bottom: 10px; font-size: 22px; color: #fff; text-shadow: 0 1px 4px #000; }
 .swatch.on::after {
   content: ""; position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; border-radius: 50%;

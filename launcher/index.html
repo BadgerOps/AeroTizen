@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div id="bg" class="bg"></div>
   <!-- Layout and look follow LTvLauncher (GPL-3.0, github.com/leanbitlab-org/LtvLauncher). -->
   <header class="topbar">
     <div class="topbar-left">
@@ -14,7 +15,6 @@
         <svg viewBox="0 0 24 24"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3h-4l-.4 2.9a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1L11 21h4l.4-2.9a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM13 15.5A3.5 3.5 0 1 1 13 8.5a3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg>
       </div>
       <svg class="status-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M12 18.5a1.8 1.8 0 1 0 0 3.6 1.8 1.8 0 0 0 0-3.6zM5.6 13.4l1.8 1.8a6.5 6.5 0 0 1 9.2 0l1.8-1.8a9 9 0 0 0-12.8 0zM2 9.8l1.8 1.8a11.6 11.6 0 0 1 16.4 0L22 9.8a14.1 14.1 0 0 0-20 0z"/></svg>
-      <span id="source" class="status-text"></span>
     </div>
     <div class="topbar-right">
       <span id="date" class="date"></span>
@@ -23,15 +23,8 @@
   </header>
 
   <main id="rows">
-    <section class="row-wrap">
-      <h2>Favorites</h2>
-      <div id="favorites" class="row big"></div>
-    </section>
-    <section class="row-wrap">
-      <h2>Apps</h2>
-      <div id="apps" class="row medium"></div>
-    </section>
-    <section class="row-wrap">
+    <div id="favorites" class="grid3"></div>
+    <section class="row-wrap inputs-wrap">
       <h2>Inputs</h2>
       <div id="inputs" class="row small"></div>
     </section>
@@ -55,6 +48,7 @@
 
   <div id="toast" class="toast" hidden></div>
   <script src="logos.js"></script>
+  <script src="backgrounds.js"></script>
   <script src="fireplace.js"></script>
   <script src="app.js"></script>
 </body>
