@@ -98,7 +98,7 @@ window.Backgrounds = (function () {
     var ctx = c.getContext('2d'), stars = [], n = dense ? 260 : 120;
     for (var i = 0; i < n; i++) {
       stars.push({ x: Math.random() * 960, y: Math.random() * 540, r: Math.random() * 1.2 + 0.3,
-                   v: Math.random() * 0.25 + 0.05, p: Math.random() * 6.28 });
+                   v: Math.random() * 1.1 + 0.35, p: Math.random() * 6.28 });
     }
     var t = 0;
     canvasTimer = setInterval(function () {
@@ -117,11 +117,11 @@ window.Backgrounds = (function () {
   function addParticles(kind) {
     var W = 960, H = 540, c = document.createElement('canvas'); c.width = W; c.height = H; c.className = 'bg-canvas';
     layer.appendChild(c);
-    var ctx = c.getContext('2d'), ps = [], n = kind === 'rain' ? 160 : kind === 'snow' ? 140 : 45;
+    var ctx = c.getContext('2d'), ps = [], n = kind === 'rain' ? 160 : kind === 'snow' ? 140 : 60;
     function spawn(p, top) {
       p.x = Math.random() * W; p.y = top ? -10 : Math.random() * H;
       p.r = kind === 'snow' ? Math.random() * 2 + 0.6 : kind === 'rain' ? Math.random() * 0.6 + 0.4 : Math.random() * 1.6 + 1;
-      p.vy = kind === 'snow' ? Math.random() * 0.6 + 0.25 : kind === 'rain' ? Math.random() * 6 + 7 : (Math.random() - 0.5) * 0.4;
+      p.vy = kind === 'snow' ? Math.random() * 1.0 + 0.6 : kind === 'rain' ? Math.random() * 6 + 7 : (Math.random() - 0.5) * 0.4;
       p.vx = kind === 'snow' ? (Math.random() - 0.5) * 0.4 : kind === 'rain' ? -1.2 : (Math.random() - 0.5) * 0.4;
       p.ph = Math.random() * 6.28; return p;
     }
@@ -132,7 +132,7 @@ window.Backgrounds = (function () {
       t += 0.05; ctx.clearRect(0, 0, W, H);
       for (var i = 0; i < ps.length; i++) {
         var p = ps[i];
-        if (kind === 'fireflies') { p.vx += (Math.random() - 0.5) * 0.05; p.vy += (Math.random() - 0.5) * 0.05; p.vx *= 0.98; p.vy *= 0.98; }
+        if (kind === 'fireflies') { p.vx += (Math.random() - 0.5) * 0.12; p.vy += (Math.random() - 0.5) * 0.12; p.vx *= 0.97; p.vy *= 0.97; }
         p.x += p.vx + (kind === 'snow' ? Math.sin(t + p.ph) * 0.3 : 0); p.y += p.vy;
         if (p.y > H + 10 || p.x < -20 || p.x > W + 20 || (kind === 'fireflies' && p.y < -10)) { spawn(p, kind !== 'fireflies'); }
         if (kind === 'rain') {
