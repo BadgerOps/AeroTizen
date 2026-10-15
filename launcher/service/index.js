@@ -43,7 +43,11 @@ function snapshot(cb) {
   var out = {}, left = state.apps.length;
   if (!left) { return cb(out); }
   state.apps.forEach(function (id) {
-    appStatus(id, function (s) { out[id] = !!(s && s.running); if (--left === 0) { cb(out); } });
+    appStatus(id, function (s) {
+      out[id] = !!(s && s.running);
+      if (s && s.visible) { out.__visible = id; }
+      if (--left === 0) { cb(out); }
+    });
   });
 }
 
@@ -86,6 +90,11 @@ function tick() {
     // launch, then decide whether something legitimate started.
     if (now - state.hiddenSince < 1000 || now - state.watchAt < 2500) { return; }
     snapshot(function (r) {
+      if (r.__visible) {
+        state.watched = r.__visible; state.seen = true; delete r.__visible; state.running = r;
+        state.last = 'stand aside: ' + state.watched + ' is on screen';
+        return;
+      }
       for (var id in r) {
         if (r[id] && !state.running[id]) {
           state.watched = id; state.seen = false; state.running = r;

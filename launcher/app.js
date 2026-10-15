@@ -17,13 +17,13 @@
   // match: lower-case name prefix; logo: Simple Icons slug; text: wordmark beside the logo (null = logo only).
   var BRANDS = [
     { match: 'youtube', bg: '#ffffff', logo: 'youtube', fill: '#ff0000', text: 'YouTube', ink: '#0f0f0f' },
-    { match: 'netflix', bg: '#161616', logo: 'netflix', fill: '#e50914', text: null },
+    { match: 'netflix', bg: 'linear-gradient(135deg,#e50914,#8a0610)', logo: 'netflix', fill: '#ffffff', text: null },
     { match: 'prime video', bg: 'linear-gradient(135deg,#1a98ff,#0f4c81)', logo: 'primevideo', fill: '#ffffff', text: null },
-    { match: 'spotify', bg: '#121212', logo: 'spotify', fill: '#1ed760', text: 'Spotify', ink: '#ffffff' },
+    { match: 'spotify', bg: 'linear-gradient(135deg,#1ed760,#0f8a3c)', logo: 'spotify', fill: '#000000', text: 'Spotify', ink: '#000000' },
     { match: 'stremio', bg: 'linear-gradient(135deg,#7b5bf5,#2b1d68)', logo: 'stremio', fill: '#ffffff', text: 'Stremio', ink: '#ffffff' },
     { match: 'max', bg: '#002be7', logo: 'max', fill: '#ffffff', text: null },
     { match: 'hulu', bg: '#1ce783', logo: 'hulu', fill: '#0b0c0f', text: null },
-    { match: 'apple tv', bg: '#1c1c1e', logo: 'appletv', fill: '#ffffff', text: null },
+    { match: 'apple tv', bg: 'linear-gradient(135deg,#4a4a4f,#1c1c1e)', logo: 'appletv', fill: '#ffffff', text: null },
     { match: 'plex', bg: '#1f1f1f', logo: 'plex', fill: '#ebaf00', text: null },
     { match: 'twitch', bg: '#9146ff', logo: 'twitch', fill: '#ffffff', text: 'Twitch', ink: '#ffffff' },
     { match: 'crunchyroll', bg: '#f47521', logo: 'crunchyroll', fill: '#ffffff', text: 'Crunchyroll', ink: '#ffffff' },
@@ -36,7 +36,7 @@
 
   var $ = function (id) { return document.getElementById(id); };
   var allApps = [], favorites = [], appOrder = [], sources = [], background = 'black';
-  var FIRE = '__fire';
+  var FIRE = '__fire', realAppIds = [];
   var rows = [], row = 1, col = [];
   var editing = false, editIndex = 0;
 
@@ -68,6 +68,12 @@
       return done();
     }
     tz.application.getAppsInfo(function (list) {
+      // Every real app (including ones hidden from the grid, like TizenBrew), so the service
+      // recognises it when it's opened from elsewhere and doesn't cover it.
+      realAppIds = list.filter(function (a) {
+        return a.show !== false && !/service|DclHome001/i.test(a.id) &&
+          (STORE_PKG.test(a.packageId || '') || PRELOADED.hasOwnProperty(a.id));
+      }).map(function (a) { return PRELOADED[a.id] || a.id; });
       allApps = list.filter(function (a) {
         return a.show !== false && a.name && !JUNK.test(a.id) && !JUNK.test(a.name) &&
           (STORE_PKG.test(a.packageId || '') || PRELOADED.hasOwnProperty(a.id));
@@ -265,7 +271,7 @@
   });
 
   function reportApps() {
-    tellService('/apps?ids=' + allApps.map(function (a) { return encodeURIComponent(PRELOADED[a.id] || a.id); }).join(','));
+    tellService('/apps?ids=' + realAppIds.map(encodeURIComponent).join(','));
   }
 
   function useSamsungHome() {
@@ -362,11 +368,27 @@
   // A short press opens the tile; holding OK lifts it, the arrows move it, OK or Back drops it.
   var moving = null, pressTimer = null, pressHandled = false;
 
+  var CHEVRON = { left: 'M15 5l-7 7 7 7', right: 'M9 5l7 7-7 7', up: 'M5 15l7-7 7 7', down: 'M5 9l7 7 7-7' };
+  // Arrows on the lifted tile, only for directions it can actually move.
+  function showArrows() {
+    var old = document.querySelectorAll('.move-arrow');
+    for (var o = 0; o < old.length; o++) { old[o].parentNode.removeChild(old[o]); }
+    if (!moving) { return; }
+    var tiles = gridTiles(), i = tiles.indexOf(moving), n = tiles.length;
+    var can = { left: i > 0, right: i < n - 1, up: i - PER_ROW >= 0, down: i + PER_ROW < n };
+    Object.keys(can).forEach(function (dir) {
+      if (!can[dir]) { return; }
+      var a = document.createElement('div'); a.className = 'move-arrow ' + dir;
+      a.innerHTML = '<svg viewBox="0 0 24 24"><path fill="none" stroke="#111" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="' + CHEVRON[dir] + '"/></svg>';
+      moving.appendChild(a);
+    });
+  }
+
   function startMove() {
     var el = rows[row][col[row]];
     if (!el || el.parentNode !== $('favorites')) { return false; }
-    moving = el; moving.classList.add('moving');
-    toast('Move with the arrows, press OK to drop');
+    moving = el; moving.classList.add('moving'); showArrows();
+    toast('Use the arrows to move it, OK to drop');
     return true;
   }
   function stepMove(delta) {
@@ -376,11 +398,11 @@
     grid.removeChild(moving);
     grid.insertBefore(moving, gridTiles()[j] || null);
     row = 1 + Math.floor(j / PER_ROW); col[row] = j % PER_ROW;
-    buildRows(); moving.classList.add('moving');
+    buildRows(); moving.classList.add('moving'); showArrows();
   }
   function endMove() {
     favorites = gridTiles().map(function (t) { return t.dataset.id; });
-    moving.classList.remove('moving'); moving = null; save();
+    moving.classList.remove('moving'); moving = null; showArrows(); save();
     $('toast').hidden = true;
   }
 
