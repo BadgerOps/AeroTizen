@@ -54,7 +54,7 @@ function snapshot(cb) {
 function launchSelf(why) {
   // Rate-limited so a failing relaunch can't loop. The TV's local API ignores launch
   // requests from the TV itself, so this uses the Tizen application API.
-  if (Date.now() - state.lastLaunch < 3000) { return; }
+  if (Date.now() - state.lastLaunch < 2000) { return; }
   state.lastLaunch = Date.now();
   state.watched = null;
   try {
@@ -65,14 +65,18 @@ function launchSelf(why) {
   }
 }
 
+var busy = false;
 function tick() {
-  if (state.leaving) { return; }
+  if (state.leaving || busy) { return; }
+  busy = true;
+  setTimeout(function () { busy = false; }, 2500);  // never stay stuck if a request hangs
   appStatus(SELF, function (me) {
+    busy = false;
     if (!me) { return; }
     var now = Date.now();
     if (me.visible) {
       state.selfVisible = true; state.hiddenSince = 0; state.watched = null;
-      if (now % 5000 < 1100) { snapshot(function (r) { state.running = r; }); }
+      if (now - (state.snapAt || 0) > 5000) { state.snapAt = now; snapshot(function (r) { state.running = r; }); }
       return;
     }
     if (state.selfVisible !== false) { state.hiddenSince = now; }
@@ -88,7 +92,8 @@ function tick() {
     }
     // Hidden and nothing opened by the launcher. Give the launcher a moment to report a
     // launch, then decide whether something legitimate started.
-    if (now - state.hiddenSince < 1000 || now - state.watchAt < 2500) { return; }
+    // The launcher reports /watch before it opens an app, so a short grace is enough.
+    if (now - state.hiddenSince < 250 || now - state.watchAt < 2500) { return; }
     snapshot(function (r) {
       if (r.__visible) {
         state.watched = r.__visible; state.seen = true; delete r.__visible; state.running = r;
@@ -123,7 +128,7 @@ module.exports.onStart = function () {
     res.writeHead(200, { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' });
     res.end(JSON.stringify(state));
   }).listen(PORT, '127.0.0.1');
-  setInterval(tick, 1000);
+  setInterval(tick, 300);
   // Started at boot (on-boot="true"): open the launcher so the TV comes up on it.
   setTimeout(function () { launchSelf('boot'); }, 3000);
 };
