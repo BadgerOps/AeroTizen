@@ -17,6 +17,7 @@
       <svg class="status-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M12 18.5a1.8 1.8 0 1 0 0 3.6 1.8 1.8 0 0 0 0-3.6zM5.6 13.4l1.8 1.8a6.5 6.5 0 0 1 9.2 0l1.8-1.8a9 9 0 0 0-12.8 0zM2 9.8l1.8 1.8a11.6 11.6 0 0 1 16.4 0L22 9.8a14.1 14.1 0 0 0-20 0z"/></svg>
     </div>
     <div class="topbar-right">
+      <span id="weather" class="weather" hidden></span>
       <span id="date" class="date"></span>
       <span id="time" class="time"></span>
     </div>
@@ -32,8 +33,15 @@
 
   <div id="editor" class="sheet" hidden>
     <h2>Settings</h2>
-    <h3>Background</h3>
-    <div id="backgrounds" class="swatches"></div>
+    <h3>Animated backgrounds</h3>
+    <div id="bg-anim" class="swatches"></div>
+    <div id="speed-row" class="speed-row" hidden></div>
+    <h3>Still backgrounds</h3>
+    <div id="bg-still" class="swatches"></div>
+    <h3>Temperature</h3>
+    <div id="units" class="units"></div>
+    <h3>Input names</h3>
+    <div id="input-names" class="units"></div>
     <h3>Favorites</h3>
     <p class="hint">OK adds or removes an app. On the home screen, hold OK on a tile to move it. Back to finish.</p>
     <div id="all-apps" class="grid"></div>
@@ -49,6 +57,7 @@
   <div id="toast" class="toast" hidden></div>
   <script src="logos.js"></script>
   <script src="backgrounds.js"></script>
+  <script src="weather.js"></script>
   <script src="fireplace.js"></script>
   <script src="app.js"></script>
 </body>

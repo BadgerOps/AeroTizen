@@ -2,7 +2,7 @@
   'use strict';
 
   var tz = window.tizen;
-  var STORE = 'declutter.home.v5';
+  var STORE = 'hearth.home.v1';
   var KEY = { LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40, ENTER: 13, BACK: 10009, ESC: 27 };
   var SELF = 'DclHome001.Home';
   var DEFAULT_FAVORITES = ['youtube', 'netflix', 'prime video', 'stremio', 'spotify'];
@@ -18,7 +18,7 @@
   var BRANDS = [
     { match: 'youtube', bg: '#ffffff', logo: 'youtube', fill: '#ff0000', text: 'YouTube', ink: '#0f0f0f' },
     { match: 'netflix', bg: 'linear-gradient(135deg,#e50914,#8a0610)', logo: 'netflix', fill: '#ffffff', text: null },
-    { match: 'prime video', bg: 'linear-gradient(135deg,#1a98ff,#0f4c81)', logo: 'primevideo', fill: '#ffffff', text: null },
+    { match: 'prime video', bg: 'linear-gradient(135deg,#1a98ff,#0f4c81)', logo: 'primevideo', fill: '#ffffff', text: null, big: true },
     { match: 'spotify', bg: 'linear-gradient(135deg,#1ed760,#0f8a3c)', logo: 'spotify', fill: '#000000', text: 'Spotify', ink: '#000000' },
     { match: 'stremio', bg: 'linear-gradient(135deg,#7b5bf5,#2b1d68)', logo: 'stremio', fill: '#ffffff', text: 'Stremio', ink: '#ffffff' },
     { match: 'max', bg: '#002be7', logo: 'max', fill: '#ffffff', text: null },
@@ -36,22 +36,26 @@
 
   var $ = function (id) { return document.getElementById(id); };
   var allApps = [], favorites = [], appOrder = [], sources = [], background = 'black';
-  var FIRE = '__fire', realAppIds = [];
+  var FIRE = '__fire', realAppIds = [], tempUnit = 'auto', bgSpeed = 1, previewing = false, inputNames = {};
   var rows = [], row = 1, col = [];
   var editing = false, editIndex = 0;
 
   // ---- storage -------------------------------------------------------------
   function load() {
     try {
+      // One-time migration from the project's earlier name.
+      if (!localStorage.getItem(STORE) && localStorage.getItem('declutter.home.v5')) {
+        localStorage.setItem(STORE, localStorage.getItem('declutter.home.v5'));
+      }
       var s = JSON.parse(localStorage.getItem(STORE)) || {};
-      favorites = s.favorites || []; appOrder = s.order || []; background = s.background || 'aurora';
+      favorites = s.favorites || []; appOrder = s.order || []; background = s.background || 'aurora'; tempUnit = s.tempUnit || 'auto'; bgSpeed = s.speed || 1; inputNames = s.inputNames || {};
     } catch (e) {}
   }
   function save() {
-    try { localStorage.setItem(STORE, JSON.stringify({ favorites: favorites, order: appOrder, background: background })); } catch (e) {}
+    try { localStorage.setItem(STORE, JSON.stringify({ favorites: favorites, order: appOrder, background: background, tempUnit: tempUnit, speed: bgSpeed, inputNames: inputNames })); } catch (e) {}
   }
 
-  function applyBackground() { window.Backgrounds.apply(background); }
+  function applyBackground() { window.Backgrounds.setSpeed(bgSpeed); window.Backgrounds.apply(background); }
 
   // ---- clock ---------------------------------------------------------------
   function tick() {
@@ -111,7 +115,7 @@
   // ---- tiles ---------------------------------------------------------------
   function banner(app, extraClass) {
     var el = document.createElement('div'), b = brand(app.name);
-    el.className = 'tile' + (extraClass ? ' ' + extraClass : '') + (b.text ? '' : ' logo-only');
+    el.className = 'tile' + (extraClass ? ' ' + extraClass : '') + (b.text ? '' : ' logo-only') + (b.big ? ' logo-big' : '');
     el.style.background = b.bg;
     if (b.logo) { el.innerHTML = logoSvg(b.logo, b.fill); }
     else if (b.useIcon && app.icon) {
@@ -182,9 +186,10 @@
     var current = null;
     try { current = tz && tz.tvwindow ? tz.tvwindow.getSource('MAIN') : null; } catch (e) {}
     sources.forEach(function (s) {
-      var label = s.editName || sourceName(s);
-      var el = card(label, inputIcon(s), function () { switchInput(s); });
-      if (s.editName && s.type !== 'TV') {
+      var custom = inputNames[sourceName(s)];
+      var label = custom || s.editName || sourceName(s);
+      var el = card(label, inputIcon({ type: s.type, editName: label }), function () { switchInput(s); });
+      if (label !== sourceName(s) && s.type !== 'TV') {
         var sub = document.createElement('div'); sub.className = 'sub'; sub.textContent = sourceName(s);
         el.querySelector('.name').appendChild(sub);
       }
@@ -235,11 +240,11 @@
   // (service/index.js) reclaims the screen; the launcher tells it what it opens.
   var watched = null, seenVisible = false, leaving = false;
   // Small ring buffer of home-takeover decisions, readable from the web inspector.
-  var homeLog = window.__homeLog = (function () { try { return JSON.parse(localStorage.getItem('declutter.log')) || []; } catch (e) { return []; } })();
+  var homeLog = window.__homeLog = (function () { try { return JSON.parse(localStorage.getItem('hearth.log')) || []; } catch (e) { return []; } })();
   function note(msg) {
     homeLog.push(new Date().toTimeString().slice(0, 8) + ' ' + msg);
     if (homeLog.length > 60) { homeLog.shift(); }
-    try { localStorage.setItem('declutter.log', JSON.stringify(homeLog)); } catch (e) {}
+    try { localStorage.setItem('hearth.log', JSON.stringify(homeLog)); } catch (e) {}
   }
   note('page loaded');
 
@@ -272,6 +277,20 @@
 
   function reportApps() {
     tellService('/apps?ids=' + realAppIds.map(encodeURIComponent).join(','));
+  }
+
+  function startPreview() {
+    previewing = true; document.body.classList.add('previewing'); clearFocus();
+    toast('Previewing. Press any key to return');
+  }
+  function endPreview() { previewing = false; document.body.classList.remove('previewing'); $('toast').hidden = true; focusEditor(); }
+
+  function openStore() {
+    if (!tz || !tz.application) { return toast('Would open the Samsung app store'); }
+    watch('org.volt.apps');
+    tz.application.launch('org.volt.apps', null, function () {
+      tz.application.launch('com.samsung.tv.store', null, function () { watched = null; toast('Could not open the app store'); });
+    });
   }
 
   function useSamsungHome() {
@@ -350,7 +369,9 @@
     var el = list[col[row]];
     el.classList.add('focused');
     // Keep the focused row on screen (only matters with more than 6 apps); transform only.
-    var top = el.offsetTop - scrollY, bottom = top + el.offsetHeight;
+    // Measure on screen (offsetTop is relative to the nearest positioned parent, e.g. the
+    // Inputs row, which made the page jump when focusing an input).
+    var rect = el.getBoundingClientRect(), top = rect.top, bottom = rect.bottom;
     if (row <= 1) { scrollY = 0; }
     else if (bottom > 1040) { scrollY += bottom - 1040; }
     else if (top < 140) { scrollY -= 140 - top; }
@@ -408,21 +429,78 @@
 
   // ---- settings sheet: background, favorites, and the tucked-away escape ------
   var eRow = 0, eCol = [0, 0, 0];
-  function openEditor() { editing = true; $('editor').hidden = false; eRow = 0; eCol = [0, 0, 0]; renderEditor(); }
-  function closeEditor() { editing = false; $('editor').hidden = true; save(); renderRows(); }
+  var SPEED_MIN = 0.25, SPEED_MAX = 3, SPEED_STEP = 0.25;
+  function openEditor() { editing = true; document.body.classList.add('editing'); $('editor').hidden = false; eRow = 0; eCol = [0, 0, 0]; eKey = 'bg:' + background; renderEditor(); }
+  function closeEditor() { editing = false; document.body.classList.remove('editing'); $('editor').hidden = true; save(); renderRows(); }
 
   function renderEditor() {
-    var bgs = $('backgrounds'); bgs.textContent = '';
+    // Animated and still themes in separate sections; the speed slider only exists for
+    // animated ones and sits right under them.
+    var anim = $('bg-anim'), still = $('bg-still'); anim.textContent = ''; still.textContent = '';
+    var current = null;
     window.Backgrounds.list.forEach(function (b) {
       var sw = document.createElement('div'); sw.className = 'swatch' + (b.id === background ? ' on' : '');
       sw.style.background = window.Backgrounds.preview(b);
-      sw.innerHTML = '<span></span>' + (b.anim ? '<em>Animated</em>' : ''); sw.firstChild.textContent = b.name;
+      sw.innerHTML = '<span></span>'; sw.firstChild.textContent = b.name;
+      sw.dataset.key = 'bg:' + b.id;
       sw.onclick = function () { background = b.id; applyBackground(); save(); renderEditor(); };
-      bgs.appendChild(sw);
+      (b.anim ? anim : still).appendChild(sw);
+      if (b.id === background) { current = b; }
     });
+
+    var row = $('speed-row'), animated = !!(current && current.anim);
+    row.hidden = !animated; row.textContent = '';
+    if (animated) {
+      var pct = (bgSpeed - SPEED_MIN) / (SPEED_MAX - SPEED_MIN) * 100;
+      var slider = document.createElement('div'); slider.className = 'slider'; slider.dataset.key = 'speed';
+      slider.innerHTML = '<span class="slider-label">Speed</span><div class="track"><div class="fill"></div><div class="thumb"></div></div>' +
+                         '<span class="slider-value"></span><span class="slider-hint">◀ ▶</span>';
+      slider.querySelector('.fill').style.width = pct + '%';
+      slider.querySelector('.thumb').style.left = pct + '%';
+      slider.querySelector('.slider-value').textContent = bgSpeed.toFixed(2).replace(/0$/, '').replace(/\.0$/, '') + '×';
+      slider.adjust = function (dir) {
+        bgSpeed = Math.round(Math.max(SPEED_MIN, Math.min(SPEED_MAX, bgSpeed + dir * SPEED_STEP)) * 100) / 100;
+        window.Backgrounds.setSpeed(bgSpeed); save(); renderEditor();
+      };
+      row.appendChild(slider);
+      var pv = document.createElement('div'); pv.className = 'pill unit preview-btn'; pv.dataset.key = 'preview';
+      pv.textContent = '▶  Preview'; pv.onclick = startPreview; row.appendChild(pv);
+    }
+
+    var units = $('units'); units.textContent = '';
+    [['auto', 'Automatic'], ['F', '°F  Fahrenheit'], ['C', '°C  Celsius']].forEach(function (u) {
+      var b = document.createElement('div'); b.className = 'pill unit' + (tempUnit === u[0] ? ' on' : ''); b.dataset.key = 'unit:' + u[0];
+      b.textContent = u[1];
+      b.onclick = function () { tempUnit = u[0]; save(); window.Weather.refresh(); renderEditor(); };
+      units.appendChild(b);
+    });
+    // Input names: OK opens the TV's on-screen keyboard; empty resets to the TV's own name.
+    var names = $('input-names'); names.textContent = '';
+    sources.filter(function (src) { return src.type !== 'TV'; }).forEach(function (src) {
+      var port = sourceName(src), pill = document.createElement('div');
+      pill.className = 'pill unit name-pill'; pill.dataset.key = 'name:' + port;
+      pill.innerHTML = '<span class="port"></span><input type="text" maxlength="24">';
+      pill.querySelector('.port').textContent = port;
+      var field = pill.querySelector('input');
+      field.value = inputNames[port] || ''; field.placeholder = src.editName || 'Add a name';
+      field.onchange = field.onblur = function () {
+        var v = field.value.trim();
+        if (v) { inputNames[port] = v; } else { delete inputNames[port]; }
+        save(); renderInputs();
+      };
+      pill.onclick = function () { field.focus(); };
+      names.appendChild(pill);
+    });
+
     var box = $('all-apps'); box.textContent = '';
+    // "Add apps" opens Samsung's app store; new apps then appear here to add to the home grid.
+    var add = document.createElement('div'); add.className = 'tile addapps'; add.dataset.key = 'add';
+    add.innerHTML = '<svg class="logo" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10.5" fill="none" stroke="#fff" stroke-width="1.6"/><path d="M12 7v10M7 12h10" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg><div class="name">Add apps<div class="sub">Samsung app store</div></div>';
+    add.onclick = openStore;
+    box.appendChild(add);
     allApps.forEach(function (app) {
       var t = banner(app, favorites.indexOf(app.id) >= 0 ? 'on' : '');
+      t.dataset.key = 'app:' + app.id;
       t.onclick = function () {
         var i = favorites.indexOf(app.id);
         if (i >= 0) { favorites.splice(i, 1); } else { favorites.push(app.id); }
@@ -434,35 +512,48 @@
   }
 
   function editorRows() {
-    var apps = [].slice.call($('all-apps').children), grid = [];
-    for (var i = 0; i < apps.length; i += 5) { grid.push(apps.slice(i, i + 5)); }
-    var sw = [].slice.call($('backgrounds').children), swRows = [];
-    for (var j = 0; j < sw.length; j += 8) { swRows.push(sw.slice(j, j + 8)); }
-    return swRows.concat(grid, [[$('escape')]]);
+    function chunk(list, n) { var out = []; for (var i = 0; i < list.length; i += n) { out.push(list.slice(i, i + n)); } return out; }
+    function kids(id) { return [].slice.call($(id).children); }
+    var rowsOut = chunk(kids('bg-anim'), 8);
+    if (!$('speed-row').hidden) { rowsOut.push(kids('speed-row')); }
+    return rowsOut.concat(chunk(kids('bg-still'), 8), [kids('units')], [kids('input-names')], chunk(kids('all-apps'), 5), [[$('escape')]]);
   }
+  var eKey = null;  // focus follows the item, so re-rendering (e.g. the slider appearing) doesn't jump
   function focusEditor() {
     clearFocus();
     var r = editorRows();
+    if (eKey) {
+      for (var i = 0; i < r.length; i++) {
+        for (var j = 0; j < r[i].length; j++) { if (r[i][j].dataset.key === eKey) { eRow = i; eCol[i] = j; } }
+      }
+    }
     eRow = Math.max(0, Math.min(eRow, r.length - 1));
     var c = Math.max(0, Math.min(eCol[eRow] || 0, r[eRow].length - 1));
     eCol[eRow] = c;
-    r[eRow][c].classList.add('focused');
-    var sheet = $('editor'), el = r[eRow][c];
-    sheet.scrollTop = Math.max(0, el.offsetTop - 640);
+    var el = r[eRow][c];
+    el.classList.add('focused'); eKey = el.dataset.key || null;
+    $('editor').scrollTop = Math.max(0, el.offsetTop - 640);
   }
   function editorKey(k) {
-    var r = editorRows();
+    var r = editorRows(), cur = r[eRow] && r[eRow][eCol[eRow] || 0];
+    if (cur && cur.adjust && (k === KEY.LEFT || k === KEY.RIGHT)) { cur.adjust(k === KEY.LEFT ? -1 : 1); return; }
+    eKey = null;
     if (k === KEY.LEFT) { eCol[eRow] = (eCol[eRow] || 0) - 1; }
     else if (k === KEY.RIGHT) { eCol[eRow] = (eCol[eRow] || 0) + 1; }
     else if (k === KEY.UP) { var c = eCol[eRow] || 0; eRow--; eCol[eRow] = c; }
     else if (k === KEY.DOWN) { var c2 = eCol[eRow] || 0; eRow = Math.min(r.length - 1, eRow + 1); eCol[eRow] = c2; }
-    else if (k === KEY.ENTER) { var el = r[eRow][eCol[eRow] || 0]; if (el === $('escape')) { useSamsungHome(); } else if (el.onclick) { el.onclick(); } }
+    else if (k === KEY.ENTER) { eKey = cur && cur.dataset.key; if (cur === $('escape')) { useSamsungHome(); } else if (cur && cur.onclick) { cur.onclick(); } return; }
     focusEditor();
   }
 
   // ---- keys ----------------------------------------------------------------
   document.addEventListener('keydown', function (e) {
     var k = e.keyCode;
+    // Typing an input name: let the on-screen keyboard have the keys; OK/Done/Back finish.
+    if (document.activeElement && document.activeElement.tagName === 'INPUT') {
+      if (k === KEY.ENTER || k === KEY.BACK || k === 65376 || k === 65385) { e.preventDefault(); document.activeElement.blur(); focusEditor(); }
+      return;
+    }
     if (window.Fireplace.isOpen()) {
       if (k === KEY.UP) { window.Fireplace.volumeUp(); }
       else if (k === KEY.DOWN) { window.Fireplace.volumeDown(); }
@@ -473,6 +564,7 @@
       if (k === KEY.BACK || k === KEY.ESC || k === KEY.ENTER) { e.preventDefault(); leaveTv(); }
       return;
     }
+    if (previewing) { e.preventDefault(); endPreview(); return; }
     if (editing) {
       if (k === KEY.BACK || k === KEY.ESC) { e.preventDefault(); closeEditor(); return; }
       editorKey(k); return;
@@ -510,7 +602,7 @@
   });
 
   // ---- boot ----------------------------------------------------------------
-  load(); applyBackground(); tick(); setInterval(tick, 10000);
+  load(); applyBackground(); tick(); setInterval(tick, 10000); window.Weather.start(function () { return tempUnit; });
   loadApps(function () {
     if (!favorites.length) { favorites = [FIRE].concat(pickDefaults()); save(); }
     renderRows(); loadSources(); startService(); setTimeout(reportApps, 1500);

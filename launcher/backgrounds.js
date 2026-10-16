@@ -53,7 +53,8 @@ window.Backgrounds = (function () {
     { id: 'rose', name: 'Rose', base: 'radial-gradient(1400px 900px at 80% -10%, #4a1430 0%, rgba(74,20,48,0) 60%), #0b0508' }
   ];
 
-  var layer = null, canvasTimer = null;
+  var layer = null, canvasTimer = null, speed = 1, current = null;
+  var BLOB_SECONDS = [11, 14, 16, 12], SLOW_SECONDS = 22, WAVE_SECONDS = [28, 18];
 
   // Small static rendering used for the Settings swatches.
   function preview(b) {
@@ -84,7 +85,8 @@ window.Backgrounds = (function () {
     var spots = [[-10, -20, 1100], [55, 35, 1200], [20, 55, 1000], [70, -15, 900]];
     b.blobs.forEach(function (c, i) {
       var d = document.createElement('div');
-      d.className = 'bg-blob bg-drift' + (i % 4) + (b.slow ? ' bg-slow' : '');
+      d.className = 'bg-blob bg-drift' + (i % 4);
+      d.style.animationDuration = ((b.slow ? SLOW_SECONDS : BLOB_SECONDS[i % 4]) / speed) + 's';
       d.style.left = spots[i][0] + '%'; d.style.top = spots[i][1] + '%';
       d.style.width = d.style.height = spots[i][2] + 'px';
       d.style.background = blob(c);
@@ -103,10 +105,10 @@ window.Backgrounds = (function () {
     var t = 0;
     canvasTimer = setInterval(function () {
       if (document.hidden) { return; }
-      t += 0.05; ctx.clearRect(0, 0, 960, 540);
+      t += 0.05 * speed; ctx.clearRect(0, 0, 960, 540);
       for (var i = 0; i < stars.length; i++) {
         var s = stars[i];
-        s.x -= s.v; if (s.x < 0) { s.x = 960; s.y = Math.random() * 540; }
+        s.x -= s.v * speed; if (s.x < 0) { s.x = 960; s.y = Math.random() * 540; }
         ctx.globalAlpha = 0.45 + 0.55 * Math.abs(Math.sin(t + s.p));
         ctx.fillStyle = '#e8eeff'; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.283); ctx.fill();
       }
@@ -129,11 +131,11 @@ window.Backgrounds = (function () {
     var t = 0;
     canvasTimer = setInterval(function () {
       if (document.hidden) { return; }
-      t += 0.05; ctx.clearRect(0, 0, W, H);
+      t += 0.05 * speed; ctx.clearRect(0, 0, W, H);
       for (var i = 0; i < ps.length; i++) {
         var p = ps[i];
         if (kind === 'fireflies') { p.vx += (Math.random() - 0.5) * 0.12; p.vy += (Math.random() - 0.5) * 0.12; p.vx *= 0.97; p.vy *= 0.97; }
-        p.x += p.vx + (kind === 'snow' ? Math.sin(t + p.ph) * 0.3 : 0); p.y += p.vy;
+        p.x += (p.vx + (kind === 'snow' ? Math.sin(t + p.ph) * 0.3 : 0)) * speed; p.y += p.vy * speed;
         if (p.y > H + 10 || p.x < -20 || p.x > W + 20 || (kind === 'fireflies' && p.y < -10)) { spawn(p, kind !== 'fireflies'); }
         if (kind === 'rain') {
           ctx.strokeStyle = 'rgba(170,200,255,.35)'; ctx.lineWidth = p.r;
@@ -154,6 +156,7 @@ window.Backgrounds = (function () {
                  'M0 80 Q 240 40 480 80 T 960 80 T 1440 80 T 1920 80 V 200 H 0 Z'];
     [['rgba(30,130,190,.28)', 'bg-wave1'], ['rgba(20,90,150,.38)', 'bg-wave2']].forEach(function (w, i) {
       var d = document.createElement('div'); d.className = 'bg-wave ' + w[1];
+      d.style.animationDuration = (WAVE_SECONDS[i] / speed) + 's';
       d.innerHTML = '<svg viewBox="0 0 1920 200" preserveAspectRatio="none"><path fill="' + w[0] + '" d="' + paths[i] + '"/>' +
                     '<path fill="' + w[0] + '" transform="translate(1920 0)" d="' + paths[i] + '"/></svg>';
       layer.appendChild(d);
@@ -162,6 +165,7 @@ window.Backgrounds = (function () {
 
   function apply(id) {
     var b = LIST.filter(function (x) { return x.id === id; })[0] || LIST[0];
+    current = b.id;
     layer = layer || document.getElementById('bg');
     clear();
     // Only the root gets a background: a body background would paint over the animated layer.
@@ -175,5 +179,8 @@ window.Backgrounds = (function () {
 
   function hide() { if (layer) { layer.hidden = true; } }
 
-  return { list: LIST, preview: preview, apply: apply, hide: hide };
+  // One multiplier for every animated background (0.5 = half speed, 2 = double).
+  function setSpeed(m) { speed = m || 1; if (current) { apply(current); } }
+
+  return { list: LIST, preview: preview, apply: apply, hide: hide, setSpeed: setSpeed };
 })();
