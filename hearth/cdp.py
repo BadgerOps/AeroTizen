@@ -1,7 +1,7 @@
 """Tiny Chrome DevTools Protocol client for a TV app exposed by inspect_app.
 
-  python3 -m declutter.cdp eval "document.title"
-  python3 -m declutter.cdp shot out.png
+  python3 -m hearth.cdp eval "document.title"
+  python3 -m hearth.cdp shot out.png
 """
 import base64
 import json

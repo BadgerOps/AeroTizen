@@ -1,14 +1,14 @@
-"""declutter: clean up a Samsung Tizen TV from your computer.
+"""hearth: clean up a Samsung Tizen TV from your computer.
 
-  python3 -m declutter discover            find TVs on your network
-  python3 -m declutter status              model, Developer Mode, sdb capabilities
-  python3 -m declutter apps                list installed packages, classified
-  python3 -m declutter debloat             pick packages to remove, then remove them
-  python3 -m declutter debloat --remove PKGID[,PKGID...] [--yes]
-  python3 -m declutter certs               sign in to Samsung, create signing certs for this TV
-  python3 -m declutter install PATH        sign + install an app folder or .wgt (e.g. launcher)
-  python3 -m declutter key KEY_VOLUP [n]   press a remote button
-  python3 -m declutter launch APPID        open an app
+  hearth discover            find TVs on your network
+  hearth status              model, Developer Mode, sdb capabilities
+  hearth apps                list installed packages, classified
+  hearth debloat             pick packages to remove, then remove them
+  hearth debloat --remove PKGID[,PKGID...] [--yes]
+  hearth certs               sign in to Samsung, create signing certs for this TV
+  hearth install PATH        sign + install an app folder or .wgt (e.g. launcher)
+  hearth key KEY_VOLUP [n]   press a remote button
+  hearth launch APPID        open an app
 
 Add --tv IP to target a specific TV (otherwise the first one found is used).
 """
@@ -195,7 +195,7 @@ def cmd_install(args):
     duid, tool_path = s.duid(), s.capability().get("sdk_toolpath", "/home/owner/share/tmp/sdk_tools")
     cdir = cert_dir_for(duid)
     if not os.path.exists(os.path.join(cdir, "distributor.p12")):
-        sys.exit(f"No certificates for this TV yet. Run: python3 -m declutter --tv {host} certs")
+        sys.exit(f"No certificates for this TV yet. Run: hearth --tv {host} certs")
     app_id = app_id_of(args.src)
     signed = os.path.join(STATE_DIR, f"{app_id.split('.')[0]}-signed.wgt")
     signer.sign_wgt(args.src, signed, cdir)
@@ -222,7 +222,7 @@ def cmd_launch(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="declutter", description=__doc__,
+    parser = argparse.ArgumentParser(prog="hearth", description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--tv", help="TV IP address")
     sub = parser.add_subparsers(dest="cmd", required=True)

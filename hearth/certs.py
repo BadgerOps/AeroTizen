@@ -115,7 +115,7 @@ def create_profile(duid, out_dir, auth=None):
     password = secrets.token_urlsafe(18)
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
-    author_csr = _csr(key, x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "declutter")]))
+    author_csr = _csr(key, x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "hearth")]))
     dist_csr = _csr(key, x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "TizenSDK"),
                                     x509.NameAttribute(NameOID.EMAIL_ADDRESS, email)]),
                     ["URN:tizen:packageid=", f"URN:tizen:deviceid={duid}"])

@@ -3,7 +3,7 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tizen-declutter"
+name = "hearth-tv"
 version = "0.1.0"
 description = "Debloat a Samsung Tizen TV, block ads, and install a clean launcher, from your computer."
 readme = "README.md"
@@ -12,10 +12,10 @@ requires-python = ">=3.9"
 dependencies = ["websocket-client>=1.6", "cryptography>=41"]
 
 [project.scripts]
-declutter = "declutter.__main__:main"
+hearth = "hearth.__main__:main"
 
 [tool.setuptools]
-packages = ["declutter"]
+packages = ["hearth"]
 
 [tool.setuptools.package-data]
-declutter = ["ca/*"]
+hearth = ["ca/*"]

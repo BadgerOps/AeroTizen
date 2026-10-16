@@ -23,8 +23,8 @@ Tested on a 2024 **UN65DU7200** (Tizen 9.0). Reports from other models are welco
 
 ```bash
 pip install -r requirements.txt        # or: pip install .  (adds a `declutter` command)
-python3 -m declutter discover
-python3 -m declutter status
+hearth discover
+hearth status
 ```
 
 Requires Python 3.9+. Add `--tv <ip>` to any command if you have more than one TV.
@@ -33,19 +33,19 @@ Requires Python 3.9+. Add `--tv <ip>` to any command if you have more than one T
 1. Open **Apps** and type `1 2 3 4 5` (use the remote's **123** button if it has no number keys).
 2. Set **Developer mode: On** and **Host PC IP** to your computer's IP, then press **OK**.
 3. **Unplug the TV for a minute.** A normal power-off is not a real restart.
-4. `python3 -m declutter status` should show `developerMode=1` and your IP.
+4. `hearth status` should show `developerMode=1` and your IP.
 
 ### 2. Certificates (once per TV)
 ```bash
-python3 -m declutter certs
+hearth certs
 ```
 This opens Samsung's sign-in page. After you sign in, certificates for this TV's DUID are
-saved to `~/.config/declutter/certs/`.
+saved to `~/.config/hearth/certs/`.
 
 ### 3. Install the launcher and TizenBrew
 ```bash
-python3 -m declutter install launcher
-python3 -m declutter install path/to/TizenBrewStandalone.wgt   # from TizenBrew releases
+hearth install launcher
+hearth install path/to/TizenBrewStandalone.wgt   # from TizenBrew releases
 ```
 Any `.wgt` or app folder works; it is re-signed for your TV automatically.
 
@@ -55,8 +55,8 @@ you want to use this tool again.
 
 ### 4. Apps
 ```bash
-python3 -m declutter apps              # classified list
-python3 -m declutter debloat           # pick what to remove
+hearth apps              # classified list
+hearth debloat           # pick what to remove
 ```
 
 ## Limits (be honest with yourself)
@@ -107,16 +107,16 @@ are welcome.
 ## Developer tools
 
 ```bash
-python3 -m declutter.inspect_app <tv-ip> DclHome001.Home   # debug-launch + DevTools on localhost:9222
-python3 -m declutter.cdp shot tv.png                        # screenshot the running app
-python3 -m declutter.cdp eval "document.title"              # run JS inside it
+python3 -m hearth.inspect_app <tv-ip> DclHome001.Home   # debug-launch + DevTools on localhost:9222
+python3 -m hearth.cdp shot tv.png                        # screenshot the running app
+python3 -m hearth.cdp eval "document.title"              # run JS inside it
 ```
 
 The inspector runs over the same single sdb connection (the TV allows only one).
 
 ## Contributing
 
-The most useful contribution is a report from your model: `python3 -m declutter status`
+The most useful contribution is a report from your model: `hearth status`
 output, your `apps` list, and which menu paths in [docs/settings.md](docs/settings.md)
 differ on your TV. Open an issue with your model number and Tizen version.
 

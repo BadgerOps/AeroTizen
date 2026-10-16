@@ -73,7 +73,7 @@ class Sdb:
         except OSError as e:
             raise SdbError(f"cannot reach {self.host}:{self.port} ({e}). "
                            "Is Developer Mode on, with this computer's IP, and was the TV restarted?")
-        self._send(CNXN, VERSION, MAX_DATA, b"host::declutter\0")
+        self._send(CNXN, VERSION, MAX_DATA, b"host::hearth\0")
         try:
             cmd, _arg0, arg1, payload = self._recv()
         except (SdbError, OSError):
