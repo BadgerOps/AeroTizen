@@ -77,7 +77,7 @@ window.Backgrounds = (function () {
   }
 
   function clear() {
-    if (canvasTimer) { clearInterval(canvasTimer); canvasTimer = null; }
+    if (canvasTimer) { if (canvasTimer.stop) { canvasTimer.stop(); } else { clearInterval(canvasTimer); } canvasTimer = null; }
     if (layer) { layer.textContent = ''; }
   }
 
@@ -94,61 +94,97 @@ window.Backgrounds = (function () {
     });
   }
 
-  function addStars(dense) {
-    var c = document.createElement('canvas'); c.width = 960; c.height = 540; c.className = 'bg-canvas';
-    layer.appendChild(c);
-    var ctx = c.getContext('2d'), stars = [], n = dense ? 260 : 120;
-    for (var i = 0; i < n; i++) {
-      stars.push({ x: Math.random() * 960, y: Math.random() * 540, r: Math.random() * 1.2 + 0.3,
-                   v: Math.random() * 1.1 + 0.35, p: Math.random() * 6.28 });
-    }
-    var t = 0;
-    canvasTimer = setInterval(function () {
-      if (document.hidden) { return; }
-      t += 0.05 * speed; ctx.clearRect(0, 0, 960, 540);
-      for (var i = 0; i < stars.length; i++) {
-        var s = stars[i];
-        s.x -= s.v * speed; if (s.x < 0) { s.x = 960; s.y = Math.random() * 540; }
-        ctx.globalAlpha = 0.45 + 0.55 * Math.abs(Math.sin(t + s.p));
-        ctx.fillStyle = '#e8eeff'; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.283); ctx.fill();
-      }
-    }, 50);
+  // ---- particle scenes, drawn at the TV's native 1920x1080 (no upscaling) ----------
+  var W = 1920, H = 1080;
+
+  // Pre-rendered soft sprites: one radial gradient drawn once, stamped many times. Crisper
+  // and much cheaper than drawing glows per particle per frame.
+  function sprite(size, stops) {
+    var c = document.createElement('canvas'); c.width = c.height = size;
+    var g = c.getContext('2d'), r = size / 2, grad = g.createRadialGradient(r, r, 0, r, r, r);
+    stops.forEach(function (st) { grad.addColorStop(st[0], st[1]); });
+    g.fillStyle = grad; g.fillRect(0, 0, size, size);
+    return c;
   }
 
-  // Snow drifts down, rain streaks, fireflies wander and pulse. Small canvas, ~20 fps.
-  function addParticles(kind) {
-    var W = 960, H = 540, c = document.createElement('canvas'); c.width = W; c.height = H; c.className = 'bg-canvas';
+  // ~30 fps animation loop; `step(dt)` gets elapsed time in 1/30 s units, scaled by speed.
+  function loop(step) {
+    var last = 0, raf = window.requestAnimationFrame || function (f) { return setTimeout(function () { f(Date.now()); }, 33); };
+    var alive = true;
+    function frame(now) {
+      if (!alive) { return; }
+      if (!document.hidden && now - last >= 32) { step(Math.min(3, (now - (last || now - 33)) / 33.3) * speed); last = now; }
+      raf(frame);
+    }
+    raf(frame);
+    canvasTimer = { stop: function () { alive = false; } };
+  }
+
+  function canvas() {
+    var c = document.createElement('canvas'); c.width = W; c.height = H; c.className = 'bg-canvas';
     layer.appendChild(c);
-    var ctx = c.getContext('2d'), ps = [], n = kind === 'rain' ? 160 : kind === 'snow' ? 140 : 60;
-    function spawn(p, top) {
-      p.x = Math.random() * W; p.y = top ? -10 : Math.random() * H;
-      p.r = kind === 'snow' ? Math.random() * 2 + 0.6 : kind === 'rain' ? Math.random() * 0.6 + 0.4 : Math.random() * 1.6 + 1;
-      p.vy = kind === 'snow' ? Math.random() * 1.0 + 0.6 : kind === 'rain' ? Math.random() * 6 + 7 : (Math.random() - 0.5) * 0.4;
-      p.vx = kind === 'snow' ? (Math.random() - 0.5) * 0.4 : kind === 'rain' ? -1.2 : (Math.random() - 0.5) * 0.4;
+    return c.getContext('2d');
+  }
+
+  function addStars(dense) {
+    var ctx = canvas(), stars = [], n = dense ? 420 : 180;
+    var glow = sprite(32, [[0, 'rgba(255,255,255,1)'], [0.12, 'rgba(235,242,255,.9)'], [0.35, 'rgba(170,200,255,.25)'], [1, 'rgba(170,200,255,0)']]);
+    for (var i = 0; i < n; i++) {
+      var depth = Math.random();
+      stars.push({ x: Math.random() * W, y: Math.random() * H, size: 6 + depth * depth * 22,
+                   v: 0.15 + depth * 1.6, p: Math.random() * 6.28, tw: 0.6 + Math.random() * 1.6 });
+    }
+    var t = 0;
+    loop(function (dt) {
+      t += 0.03 * dt; ctx.clearRect(0, 0, W, H);
+      for (var i = 0; i < stars.length; i++) {
+        var s = stars[i];
+        s.x -= s.v * dt; if (s.x < -20) { s.x = W + 20; s.y = Math.random() * H; }
+        ctx.globalAlpha = 0.35 + 0.65 * Math.abs(Math.sin(t * s.tw + s.p));
+        ctx.drawImage(glow, s.x - s.size / 2, s.y - s.size / 2, s.size, s.size);
+      }
+      ctx.globalAlpha = 1;
+    });
+  }
+
+  // Snow drifts with depth (near flakes bigger and faster), rain falls in fine streaks,
+  // fireflies wander and pulse with a soft halo.
+  function addParticles(kind) {
+    var ctx = canvas(), ps = [], n = kind === 'rain' ? 260 : kind === 'snow' ? 260 : 70;
+    var flake = sprite(64, [[0, 'rgba(255,255,255,1)'], [0.25, 'rgba(255,255,255,.85)'], [0.6, 'rgba(255,255,255,.18)'], [1, 'rgba(255,255,255,0)']]);
+    var fly = sprite(96, [[0, 'rgba(255,255,220,1)'], [0.08, 'rgba(235,255,140,.95)'], [0.3, 'rgba(200,255,80,.35)'], [1, 'rgba(180,255,60,0)']]);
+    function spawn(p, fromTop) {
+      p.d = Math.random();
+      p.x = Math.random() * W; p.y = fromTop ? -40 : Math.random() * H;
+      if (kind === 'snow') { p.size = 6 + p.d * p.d * 28; p.vy = 0.8 + p.d * 2.6; p.vx = (Math.random() - 0.5) * 0.6; }
+      else if (kind === 'rain') { p.len = 18 + p.d * 38; p.vy = 18 + p.d * 16; p.vx = -2.5 - p.d * 2; p.w = 0.8 + p.d * 1.4; }
+      else { p.size = 40 + p.d * 50; p.vx = (Math.random() - 0.5) * 0.8; p.vy = (Math.random() - 0.5) * 0.8; }
       p.ph = Math.random() * 6.28; return p;
     }
     for (var i = 0; i < n; i++) { ps.push(spawn({}, false)); }
     var t = 0;
-    canvasTimer = setInterval(function () {
-      if (document.hidden) { return; }
-      t += 0.05 * speed; ctx.clearRect(0, 0, W, H);
+    loop(function (dt) {
+      t += 0.03 * dt; ctx.clearRect(0, 0, W, H);
       for (var i = 0; i < ps.length; i++) {
         var p = ps[i];
-        if (kind === 'fireflies') { p.vx += (Math.random() - 0.5) * 0.12; p.vy += (Math.random() - 0.5) * 0.12; p.vx *= 0.97; p.vy *= 0.97; }
-        p.x += (p.vx + (kind === 'snow' ? Math.sin(t + p.ph) * 0.3 : 0)) * speed; p.y += p.vy * speed;
-        if (p.y > H + 10 || p.x < -20 || p.x > W + 20 || (kind === 'fireflies' && p.y < -10)) { spawn(p, kind !== 'fireflies'); }
+        if (kind === 'fireflies') {
+          p.vx += (Math.random() - 0.5) * 0.15; p.vy += (Math.random() - 0.5) * 0.15; p.vx *= 0.97; p.vy *= 0.97;
+        }
+        p.x += (p.vx + (kind === 'snow' ? Math.sin(t * 1.5 + p.ph) * 0.6 : 0)) * dt; p.y += p.vy * dt;
+        if (p.y > H + 60 || p.x < -80 || p.x > W + 80 || (kind === 'fireflies' && p.y < -80)) { spawn(p, kind !== 'fireflies'); }
         if (kind === 'rain') {
-          ctx.strokeStyle = 'rgba(170,200,255,.35)'; ctx.lineWidth = p.r;
-          ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + p.vx * 2, p.y + p.vy * 2); ctx.stroke();
+          ctx.strokeStyle = 'rgba(190,215,255,' + (0.18 + p.d * 0.4).toFixed(2) + ')'; ctx.lineWidth = p.w; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.vx * p.len / p.vy, p.y - p.len); ctx.stroke();
+        } else if (kind === 'snow') {
+          ctx.globalAlpha = 0.45 + p.d * 0.55;
+          ctx.drawImage(flake, p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
         } else {
-          var a = kind === 'fireflies' ? 0.25 + 0.75 * Math.abs(Math.sin(t * 0.8 + p.ph)) : 0.8;
-          ctx.globalAlpha = a; ctx.fillStyle = kind === 'fireflies' ? '#d9ff7a' : '#ffffff';
-          if (kind === 'fireflies') { ctx.shadowBlur = 8; ctx.shadowColor = '#c8ff50'; }
-          ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283); ctx.fill();
-          ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+          ctx.globalAlpha = 0.15 + 0.85 * Math.pow(Math.abs(Math.sin(t * 0.9 + p.ph)), 2);
+          ctx.drawImage(fly, p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
         }
       }
-    }, 50);
+      ctx.globalAlpha = 1;
+    });
   }
 
   function addWaves() {
