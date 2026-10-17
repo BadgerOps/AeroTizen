@@ -5,6 +5,7 @@ developer CA. This does what Tizen Studio's Certificate Manager does: sign in to
 Samsung account in the browser, send two CSRs, and package the results as .p12.
 Flow and endpoints follow the MIT-licensed Apps2Samsung project.
 """
+
 import http.server
 import json
 import os
@@ -49,16 +50,23 @@ def samsung_login(timeout=300):
             self.send_response(200 if ok else 400)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.end_headers()
-            self.wfile.write(("<h2 style='font-family:sans-serif'>Signed in. You can close this tab.</h2>"
-                              if ok else "Sign-in failed. Close this tab and try again.").encode())
+            self.wfile.write(
+                (
+                    "<h2 style='font-family:sans-serif'>Signed in. You can close this tab.</h2>"
+                    if ok
+                    else "Sign-in failed. Close this tab and try again."
+                ).encode()
+            )
 
         def log_message(self, *args):
             pass
 
     server = http.server.HTTPServer(("localhost", CALLBACK_PORT), Handler)
     redirect = f"http://localhost:{CALLBACK_PORT}{CALLBACK_PATH}"
-    url = (f"{SIGNIN_GATE}?locale=&clientId={CLIENT_ID}&redirect_uri={urllib.parse.quote(redirect, safe='')}"
-           f"&state={STATE}&tokenType=TOKEN")
+    url = (
+        f"{SIGNIN_GATE}?locale=&clientId={CLIENT_ID}&redirect_uri={urllib.parse.quote(redirect, safe='')}"
+        f"&state={STATE}&tokenType=TOKEN"
+    )
     server.timeout = timeout
     print("Opening Samsung sign-in in your browser...\n  " + url)
     webbrowser.open(url)
@@ -75,9 +83,13 @@ def _multipart(fields, file_field, filename, data):
     boundary = uuid.uuid4().hex
     parts = []
     for k, v in fields.items():
-        parts.append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"{k}\"\r\n\r\n{v}\r\n".encode())
-    parts.append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"{file_field}\"; "
-                 f"filename=\"{filename}\"\r\nContent-Type: application/octet-stream\r\n\r\n".encode() + data + b"\r\n")
+        parts.append(f'--{boundary}\r\nContent-Disposition: form-data; name="{k}"\r\n\r\n{v}\r\n'.encode())
+    parts.append(
+        f'--{boundary}\r\nContent-Disposition: form-data; name="{file_field}"; '
+        f'filename="{filename}"\r\nContent-Type: application/octet-stream\r\n\r\n'.encode()
+        + data
+        + b"\r\n"
+    )
     parts.append(f"--{boundary}--\r\n".encode())
     return b"".join(parts), f"multipart/form-data; boundary={boundary}"
 
@@ -89,14 +101,16 @@ def _post(url, fields, filename, csr):
         with urllib.request.urlopen(req, timeout=60) as r:
             return r.read()
     except urllib.error.HTTPError as e:
-        raise SystemExit(f"Samsung certificate server refused {url}: {e.code} {e.read().decode(errors='replace')[:300]}")
+        detail = e.read().decode(errors="replace")[:300]
+        raise SystemExit(f"Samsung certificate server refused {url}: {e.code} {detail}") from e
 
 
 def _csr(key, subject, sans=None):
     builder = x509.CertificateSigningRequestBuilder().subject_name(subject)
     if sans:
-        builder = builder.add_extension(x509.SubjectAlternativeName(
-            [x509.UniformResourceIdentifier(u) for u in sans]), critical=False)
+        builder = builder.add_extension(
+            x509.SubjectAlternativeName([x509.UniformResourceIdentifier(u) for u in sans]), critical=False
+        )
     return builder.sign(key, hashes.SHA256()).public_bytes(serialization.Encoding.PEM)
 
 
@@ -116,9 +130,16 @@ def create_profile(duid, out_dir, auth=None):
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
     author_csr = _csr(key, x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "hearth")]))
-    dist_csr = _csr(key, x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "TizenSDK"),
-                                    x509.NameAttribute(NameOID.EMAIL_ADDRESS, email)]),
-                    ["URN:tizen:packageid=", f"URN:tizen:deviceid={duid}"])
+    dist_csr = _csr(
+        key,
+        x509.Name(
+            [
+                x509.NameAttribute(NameOID.COMMON_NAME, "TizenSDK"),
+                x509.NameAttribute(NameOID.EMAIL_ADDRESS, email),
+            ]
+        ),
+        ["URN:tizen:packageid=", f"URN:tizen:deviceid={duid}"],
+    )
 
     base = {"access_token": token, "user_id": user_id, "platform": "VD"}
     author = _load_cert(_post(AUTHOR_URL, base, "author.csr", author_csr))

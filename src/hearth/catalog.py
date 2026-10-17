@@ -5,27 +5,66 @@ packages (10-char random id + name) are ever candidates. Platform packages
 (org.tizen.*, com.samsung.*, and everything else) are never touched, because
 removing one can break Home and only a factory reset brings it back.
 """
+
 import re
 
 STORE_PKG = re.compile(r"^[A-Za-z0-9]{10}$")
 
 # Store-pattern packages that are actually TV infrastructure.
 PROTECTED_PKGS = {
-    "ZODRT12q2l",   # WebAccountExtension (account plumbing)
-    "aQjWjLsPaO",   # MultiScreenWebLauncher
-    "30IKH0OX8U",   # Aria video background services
+    "ZODRT12q2l",  # WebAccountExtension (account plumbing)
+    "aQjWjLsPaO",  # MultiScreenWebLauncher
+    "30IKH0OX8U",  # Aria video background services
 }
 PROTECTED_NAME_HINTS = ("lowmem", "webaccount", "multiscreen", "adplayer", "launcher")
 
 # Names that are almost never wanted. Everything else store-installed is "optional".
 LIKELY_BLOAT_HINTS = (
-    "e-manual", "emanual", "demo", "retail", "shop", "store mode", "tips", "gaming hub",
-    "samsung health", "samsung art", "ambient", "workout", "fitness", "news", "weather",
-    "tiktok", "facebook watch", "pluto", "tubi", "plex", "vudu", "fandango", "sling",
-    "philo", "frndly", "xumo", "freevee", "rakuten", "amazon music", "deezer", "pandora",
-    "user guide", "smartthings", "youtube tv",
-    "iheart", "twitch", "steam link", "xbox", "geforce", "utomik", "antstream", "blacknut",
-    "boosteroid", "luna", "stadia",
+    "e-manual",
+    "emanual",
+    "demo",
+    "retail",
+    "shop",
+    "store mode",
+    "tips",
+    "gaming hub",
+    "samsung health",
+    "samsung art",
+    "ambient",
+    "workout",
+    "fitness",
+    "news",
+    "weather",
+    "tiktok",
+    "facebook watch",
+    "pluto",
+    "tubi",
+    "plex",
+    "vudu",
+    "fandango",
+    "sling",
+    "philo",
+    "frndly",
+    "xumo",
+    "freevee",
+    "rakuten",
+    "amazon music",
+    "deezer",
+    "pandora",
+    "user guide",
+    "smartthings",
+    "youtube tv",
+    "iheart",
+    "twitch",
+    "steam link",
+    "xbox",
+    "geforce",
+    "utomik",
+    "antstream",
+    "blacknut",
+    "boosteroid",
+    "luna",
+    "stadia",
 )
 
 
@@ -40,15 +79,17 @@ def parse_blocks(text):
         if "app_id" not in f:
             continue
         tizen_id = f.get("app_tizen_id") or f["app_id"]
-        apps.append({
-            "appid": tizen_id,
-            "pkgid": f.get("app_package_name") or tizen_id.split(".")[0],
-            "name": f.get("app_title") or tizen_id,
-            "store_id": f["app_id"],
-            "removable": f.get("is_removable") == "1",
-            "size_mb": int(f.get("app_size") or 0) // (1024 * 1024),
-            "uses": int(f.get("use_count") or 0),
-        })
+        apps.append(
+            {
+                "appid": tizen_id,
+                "pkgid": f.get("app_package_name") or tizen_id.split(".")[0],
+                "name": f.get("app_title") or tizen_id,
+                "store_id": f["app_id"],
+                "removable": f.get("is_removable") == "1",
+                "size_mb": int(f.get("app_size") or 0) // (1024 * 1024),
+                "uses": int(f.get("use_count") or 0),
+            }
+        )
     return apps
 
 
@@ -75,8 +116,14 @@ def parse_applist(text):
         appid = appid.strip()
         if not re.match(r"^[\w.\-]+$", appid):
             continue
-        apps.append({"appid": appid, "pkgid": appid.split(".")[0] if "." in appid else appid,
-                     "name": (name or appid).strip(), "raw": line})
+        apps.append(
+            {
+                "appid": appid,
+                "pkgid": appid.split(".")[0] if "." in appid else appid,
+                "name": (name or appid).strip(),
+                "raw": line,
+            }
+        )
     return apps
 
 

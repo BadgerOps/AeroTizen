@@ -1,0 +1,6 @@
+"""Allow ``python -m hearth``."""
+
+from hearth.cli import main
+
+if __name__ == "__main__":
+    main()

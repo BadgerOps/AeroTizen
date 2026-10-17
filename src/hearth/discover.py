@@ -1,11 +1,14 @@
 """Find Samsung Tizen TVs on the local network with SSDP (many TVs ignore ping)."""
+
 import json
 import re
 import socket
 import urllib.request
 
-MSEARCH = ("M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: \"ssdp:discover\"\r\n"
-           "MX: 2\r\nST: upnp:rootdevice\r\n\r\n").encode()
+MSEARCH = (
+    b'M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: "ssdp:discover"\r\n'
+    b"MX: 2\r\nST: upnp:rootdevice\r\n\r\n"
+)
 
 
 def discover(timeout=3):
@@ -29,7 +32,14 @@ def discover(timeout=3):
             d = json.load(urllib.request.urlopen(f"http://{ip}:8001/api/v2/", timeout=3))["device"]
         except Exception:
             continue
-        tvs.append({"ip": ip, "name": d["name"].replace("&quot;", '"'), "model": d.get("modelName"),
-                    "os": d.get("OS"), "developerMode": d.get("developerMode"),
-                    "developerIP": d.get("developerIP")})
+        tvs.append(
+            {
+                "ip": ip,
+                "name": d["name"].replace("&quot;", '"'),
+                "model": d.get("modelName"),
+                "os": d.get("OS"),
+                "developerMode": d.get("developerMode"),
+                "developerIP": d.get("developerIP"),
+            }
+        )
     return tvs

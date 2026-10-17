@@ -8,6 +8,7 @@ Retail TVs only accept a handful of shell verbs ("0 vd_applist",
 "0 vd_appuninstall <pkgid>", "0 was_execute <appid>", "0 getduid", ...) and
 only from the Host PC IP set in the TV's Developer Mode dialog.
 """
+
 import socket
 import struct
 import time
@@ -17,7 +18,8 @@ VERSION = 0x01000000
 MAX_DATA = 256 * 1024
 
 CNXN, AUTH, OPEN, OKAY, WRTE, CLSE = (
-    struct.unpack("<I", c)[0] for c in (b"CNXN", b"AUTH", b"OPEN", b"OKAY", b"WRTE", b"CLSE"))
+    struct.unpack("<I", c)[0] for c in (b"CNXN", b"AUTH", b"OPEN", b"OKAY", b"WRTE", b"CLSE")
+)
 NAMES = {CNXN: "CNXN", AUTH: "AUTH", OPEN: "OPEN", OKAY: "OKAY", WRTE: "WRTE", CLSE: "CLSE"}
 
 
@@ -35,8 +37,9 @@ class Sdb:
 
     # -- framing -------------------------------------------------------------
     def _send(self, cmd, arg0, arg1, payload=b""):
-        header = struct.pack("<6I", cmd, arg0, arg1, len(payload),
-                             sum(payload) & 0xFFFFFFFF, cmd ^ 0xFFFFFFFF)
+        header = struct.pack(
+            "<6I", cmd, arg0, arg1, len(payload), sum(payload) & 0xFFFFFFFF, cmd ^ 0xFFFFFFFF
+        )
         self.sock.sendall(header + payload)
 
     def _recv_exact(self, n):
@@ -64,21 +67,27 @@ class Sdb:
             except (SdbError, OSError) as e:
                 self.close()
                 if attempt == attempts - 1:
-                    raise e if isinstance(e, SdbError) else SdbError(str(e))
+                    if isinstance(e, SdbError):
+                        raise
+                    raise SdbError(str(e)) from e
                 time.sleep(2)
 
     def _connect_once(self):
         try:
             self.sock = socket.create_connection((self.host, self.port), timeout=self.timeout)
         except OSError as e:
-            raise SdbError(f"cannot reach {self.host}:{self.port} ({e}). "
-                           "Is Developer Mode on, with this computer's IP, and was the TV restarted?")
+            raise SdbError(
+                f"cannot reach {self.host}:{self.port} ({e}). "
+                "Is Developer Mode on, with this computer's IP, and was the TV restarted?"
+            ) from e
         self._send(CNXN, VERSION, MAX_DATA, b"host::hearth\0")
         try:
             cmd, _arg0, arg1, payload = self._recv()
-        except (SdbError, OSError):
-            raise SdbError("TV closed the connection during handshake. Usually the Developer Mode "
-                           "Host PC IP doesn't match this computer, or the TV wasn't restarted.")
+        except (SdbError, OSError) as e:
+            raise SdbError(
+                "TV closed the connection during handshake. Usually the Developer Mode "
+                "Host PC IP doesn't match this computer, or the TV wasn't restarted."
+            ) from e
         if cmd == AUTH:
             raise SdbError("TV asked for key authentication, which this client doesn't support yet.")
         if cmd != CNXN:
@@ -138,7 +147,7 @@ class Sdb:
         def write(chunk):
             self._send(WRTE, local_id, remote_id, chunk)
             while True:  # each WRTE must be acknowledged before the next
-                cmd, arg0, arg1, _p = self._recv()
+                cmd, _arg0, arg1, _p = self._recv()
                 if arg1 == local_id and cmd == OKAY:
                     return
                 if arg1 == local_id and cmd == CLSE:
@@ -150,7 +159,7 @@ class Sdb:
         path = remote_path.encode()
         write(packet(b"SEND", path))
         for i in range(0, len(data), 64 * 1024):
-            write(packet(b"DATA", data[i:i + 64 * 1024]))
+            write(packet(b"DATA", data[i : i + 64 * 1024]))
         write(packet(b"DONE", struct.pack("<I", int(time.time()))))
 
         reply = b""
@@ -181,7 +190,6 @@ class Sdb:
                 raise SdbError("TV refused sync")
         p = path.encode()
         self._send(WRTE, local_id, remote_id, request + struct.pack("<I", len(p)) + p)
-        end = b"DONE" if request == b"LIST" else None
         while not done:
             cmd, arg0, arg1, payload = self._recv()
             if arg1 != local_id:
@@ -200,16 +208,16 @@ class Sdb:
     def _sync_complete(buf, request):
         i = 0
         while i + 8 <= len(buf):
-            tag = buf[i:i + 4]
+            tag = buf[i : i + 4]
             if request == b"LIST":
                 if tag == b"DONE":
                     return True
                 if tag != b"DENT" or i + 20 > len(buf):
                     return tag == b"FAIL"
-                (namelen,) = struct.unpack("<I", buf[i + 16:i + 20])
+                (namelen,) = struct.unpack("<I", buf[i + 16 : i + 20])
                 i += 20 + namelen
             else:
-                (n,) = struct.unpack("<I", buf[i + 4:i + 8])
+                (n,) = struct.unpack("<I", buf[i + 4 : i + 8])
                 if tag in (b"DONE", b"FAIL"):
                     return True
                 i += 8 + n
@@ -217,9 +225,9 @@ class Sdb:
 
     def listdir(self, path):
         buf, out, i = self._sync(b"LIST", path), [], 0
-        while i + 20 <= len(buf) and buf[i:i + 4] == b"DENT":
-            mode, size, _mtime, namelen = struct.unpack("<4I", buf[i + 4:i + 20])
-            name = buf[i + 20:i + 20 + namelen].decode(errors="replace")
+        while i + 20 <= len(buf) and buf[i : i + 4] == b"DENT":
+            mode, size, _mtime, namelen = struct.unpack("<4I", buf[i + 4 : i + 20])
+            name = buf[i + 20 : i + 20 + namelen].decode(errors="replace")
             if name not in (".", ".."):
                 out.append((name, size, mode))
             i += 20 + namelen
@@ -228,11 +236,11 @@ class Sdb:
     def pull(self, path):
         buf, data, i = self._sync(b"RECV", path), bytearray(), 0
         while i + 8 <= len(buf):
-            tag, (n,) = buf[i:i + 4], struct.unpack("<I", buf[i + 4:i + 8])
+            tag, (n,) = buf[i : i + 4], struct.unpack("<I", buf[i + 4 : i + 8])
             if tag == b"DATA":
-                data += buf[i + 8:i + 8 + n]
+                data += buf[i + 8 : i + 8 + n]
             elif tag == b"FAIL":
-                raise SdbError(buf[i + 8:i + 8 + n].decode(errors="replace"))
+                raise SdbError(buf[i + 8 : i + 8 + n].decode(errors="replace"))
             elif tag == b"DONE":
                 break
             i += 8 + n
@@ -320,6 +328,7 @@ class Sdb:
         """Launch an app with the web inspector enabled; returns the inspector port."""
         # The TV keeps this stream open, so read until the port appears rather than to EOF.
         import re
+
         lid = self._next_id
         self._next_id += 1
         self._send(OPEN, lid, 0, f"shell:0 debug {app_id}\0".encode())

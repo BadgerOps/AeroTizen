@@ -12,6 +12,7 @@
 
 Add --tv IP to target a specific TV (otherwise the first one found is used).
 """
+
 import argparse
 import datetime
 import json
@@ -19,8 +20,8 @@ import os
 import sys
 from collections import OrderedDict
 
-from . import catalog, discover, remote
-from .sdb import Sdb, SdbError
+from hearth import catalog, discover, remote
+from hearth.sdb import Sdb, SdbError
 
 STATE_DIR = remote.CONFIG_DIR
 
@@ -48,11 +49,12 @@ def packages(applist_text):
     pkgs = OrderedDict()
     for app in catalog.parse_applist(applist_text):
         pkgs.setdefault(app["pkgid"], {"apps": []})["apps"].append(app)
-    for pkgid, pkg in pkgs.items():
+    for _pkgid, pkg in pkgs.items():
         classes = [catalog.classify(a) for a in pkg["apps"]]
         # A package goes as a unit, so one protected app protects the whole package.
-        pkg["class"] = ("protected" if "protected" in classes
-                        else "bloat" if "bloat" in classes else "optional")
+        pkg["class"] = (
+            "protected" if "protected" in classes else "bloat" if "bloat" in classes else "optional"
+        )
         pkg["name"] = min((a["name"] for a in pkg["apps"]), key=len)
     return pkgs
 
@@ -62,8 +64,10 @@ def require_sdb(host):
         return Sdb(host).connect()
     except SdbError as e:
         d = remote.info(host)
-        sys.exit(f"sdb: {e}\nTV reports developerMode={d.get('developerMode')} "
-                 f"developerIP={d.get('developerIP')}. See README > Developer Mode.")
+        sys.exit(
+            f"sdb: {e}\nTV reports developerMode={d.get('developerMode')} "
+            f"developerIP={d.get('developerIP')}. See README > Developer Mode."
+        )
 
 
 def cmd_discover(args):
@@ -75,7 +79,10 @@ def cmd_status(args):
     host = pick_tv(args)
     d = remote.info(host)
     print(f"{d['name'].replace('&quot;', chr(34))}  {d.get('modelName')}  {host}")
-    print(f"power={d.get('PowerState')} developerMode={d.get('developerMode')} developerIP={d.get('developerIP')}")
+    print(
+        f"power={d.get('PowerState')} developerMode={d.get('developerMode')} "
+        f"developerIP={d.get('developerIP')}"
+    )
     if d.get("developerMode") == "1":
         with require_sdb(host) as s:
             print("sdb banner:", s.banner)
@@ -117,7 +124,9 @@ def cmd_debloat(args):
         print("\nRemovable packages:")
         for i, (pkgid, v) in enumerate(candidates, 1):
             print(f"  {i:>2}. [{v['class']:<8}] {v['name']:<36} {pkgid}")
-        answer = input("\nNumbers to remove (e.g. 1 3 5), 'bloat' for all bloat, or Enter to cancel: ").strip()
+        answer = input(
+            "\nNumbers to remove (e.g. 1 3 5), 'bloat' for all bloat, or Enter to cancel: "
+        ).strip()
         if not answer:
             return
         if answer == "bloat":
@@ -143,7 +152,7 @@ def cmd_debloat(args):
         gone = pkgid not in packages(after)
         print(f"{'removed' if gone else 'STILL PRESENT'}  {pkgs[pkgid]['name']} ({pkgid})")
         if not gone:
-            reason = next((l for l in out.splitlines() if "fail" in l or "can not" in l), out[-120:])
+            reason = next((ln for ln in out.splitlines() if "fail" in ln or "can not" in ln), out[-120:])
             print("   TV said:", reason or "(nothing)")
             refused.append(pkgs[pkgid]["name"])
         current = after
@@ -151,9 +160,11 @@ def cmd_debloat(args):
     s.close()
     if refused:
         # Tizen 6+ retail firmware only lets sdb remove developer-installed apps.
-        print("\nThis firmware won't let sdb remove store/preloaded apps. Delete them on the TV instead:\n"
-              "  Home > Apps > Settings (gear, top right) > select the app > Delete\n"
-              "  Apps: " + ", ".join(refused))
+        print(
+            "\nThis firmware won't let sdb remove store/preloaded apps. Delete them on the TV instead:\n"
+            "  Home > Apps > Settings (gear, top right) > select the app > Delete\n"
+            "  Apps: " + ", ".join(refused)
+        )
 
 
 def cert_dir_for(duid):
@@ -161,7 +172,8 @@ def cert_dir_for(duid):
 
 
 def cmd_certs(args):
-    from . import certs
+    from hearth import certs
+
     host = pick_tv(args)
     with require_sdb(host) as s:
         duid = s.duid()
@@ -177,8 +189,10 @@ def app_id_of(src):
     """Read <tizen:application id="..."> from a folder's or .wgt's config.xml."""
     import re
     import zipfile
+
     if os.path.isdir(src):
-        xml = open(os.path.join(src, "config.xml"), encoding="utf-8").read()
+        with open(os.path.join(src, "config.xml"), encoding="utf-8") as f:
+            xml = f.read()
     else:
         with zipfile.ZipFile(src) as z:
             xml = z.read("config.xml").decode("utf-8")
@@ -189,7 +203,8 @@ def app_id_of(src):
 
 
 def cmd_install(args):
-    from . import signer
+    from hearth import signer
+
     host = pick_tv(args)
     s = require_sdb(host)
     duid, tool_path = s.duid(), s.capability().get("sdk_toolpath", "/home/owner/share/tmp/sdk_tools")
@@ -222,8 +237,9 @@ def cmd_launch(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="hearth", description=__doc__,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        prog="hearth", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--tv", help="TV IP address")
     sub = parser.add_subparsers(dest="cmd", required=True)
     sub.add_parser("discover").set_defaults(fn=cmd_discover)

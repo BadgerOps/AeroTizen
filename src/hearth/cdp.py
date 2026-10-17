@@ -1,8 +1,9 @@
 """Tiny Chrome DevTools Protocol client for a TV app exposed by inspect_app.
 
-  python3 -m hearth.cdp eval "document.title"
-  python3 -m hearth.cdp shot out.png
+python3 -m hearth.cdp eval "document.title"
+python3 -m hearth.cdp shot out.png
 """
+
 import base64
 import json
 import sys
@@ -30,7 +31,9 @@ class Page:
     def eval(self, expr):
         r = self.call("Runtime.evaluate", expression=expr, awaitPromise=True, returnByValue=True)
         if "exceptionDetails" in r:
-            raise RuntimeError(r["exceptionDetails"].get("exception", {}).get("description") or r["exceptionDetails"])
+            raise RuntimeError(
+                r["exceptionDetails"].get("exception", {}).get("description") or r["exceptionDetails"]
+            )
         return r["result"].get("value")
 
     def screenshot(self, path):

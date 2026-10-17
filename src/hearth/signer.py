@@ -6,6 +6,7 @@ the author signature. RSA-SHA512 over exclusive-C14N SignedInfo, SHA-512 digests
 The XML is emitted directly in canonical form, so no C14N library is needed.
 Structure follows the MIT-licensed TizenSdb.Core signer.
 """
+
 import base64
 import hashlib
 import io
@@ -37,15 +38,21 @@ def _b64(data):
 def _prop_object(sig_id, with_ns):
     role = "author" if sig_id == "AuthorSignature" else "distributor"
     ns = f' xmlns="{DSIG}"' if with_ns else ""
+
     def prop(pid, name, uri):
         uri_attr = f' URI="{uri}"' if uri else ""
-        return (f'<SignatureProperty Id="{pid}" Target="#{sig_id}">'
-                f'<dsp:{name}{uri_attr}></dsp:{name}></SignatureProperty>')
-    return (f'<Object{ns} Id="prop"><SignatureProperties xmlns:dsp="{DSP}">'
-            + prop("profile", "Profile", "http://www.w3.org/ns/widgets-digsig#profile")
-            + prop("role", "Role", f"http://www.w3.org/ns/widgets-digsig#role-{role}")
-            + prop("identifier", "Identifier", None)
-            + "</SignatureProperties></Object>")
+        return (
+            f'<SignatureProperty Id="{pid}" Target="#{sig_id}">'
+            f"<dsp:{name}{uri_attr}></dsp:{name}></SignatureProperty>"
+        )
+
+    return (
+        f'<Object{ns} Id="prop"><SignatureProperties xmlns:dsp="{DSP}">'
+        + prop("profile", "Profile", "http://www.w3.org/ns/widgets-digsig#profile")
+        + prop("role", "Role", f"http://www.w3.org/ns/widgets-digsig#role-{role}")
+        + prop("identifier", "Identifier", None)
+        + "</SignatureProperties></Object>"
+    )
 
 
 def _signed_info(files, prop_digest, with_ns):
@@ -53,20 +60,23 @@ def _signed_info(files, prop_digest, with_ns):
     refs = "".join(
         f'<Reference URI="{_attr(urllib.parse.quote(name, safe="/"))}">'
         f'<DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>'
-        f'<DigestValue>{_b64(hashlib.sha512(data).digest())}</DigestValue></Reference>'
-        for name, data in files)
-    return (f'<SignedInfo{ns}>'
-            '<CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"></CanonicalizationMethod>'
-            '<SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha512"></SignatureMethod>'
-            + refs +
-            '<Reference URI="#prop"><Transforms>'
-            '<Transform Algorithm="http://www.w3.org/2006/12/xml-c14n11"></Transform></Transforms>'
-            '<DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>'
-            f'<DigestValue>{prop_digest}</DigestValue></Reference></SignedInfo>')
+        f"<DigestValue>{_b64(hashlib.sha512(data).digest())}</DigestValue></Reference>"
+        for name, data in files
+    )
+    return (
+        f"<SignedInfo{ns}>"
+        '<CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"></CanonicalizationMethod>'
+        '<SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha512"></SignatureMethod>'
+        + refs
+        + '<Reference URI="#prop"><Transforms>'
+        '<Transform Algorithm="http://www.w3.org/2006/12/xml-c14n11"></Transform></Transforms>'
+        '<DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>'
+        f"<DigestValue>{prop_digest}</DigestValue></Reference></SignedInfo>"
+    )
 
 
 def _wrap76(s):
-    return "\n".join(s[i:i + 76] for i in range(0, len(s), 76))
+    return "\n".join(s[i : i + 76] for i in range(0, len(s), 76))
 
 
 def _signature(sig_id, files, key, chain):
@@ -75,12 +85,18 @@ def _signature(sig_id, files, key, chain):
     prop_digest = _b64(hashlib.sha512(_prop_object(sig_id, True).encode()).digest())
     signed_info = _signed_info(files, prop_digest, True).encode()
     sig = key.sign(signed_info, padding.PKCS1v15(), hashes.SHA512())
-    certs = "".join(f"<X509Certificate>\n{_wrap76(_b64(c.public_bytes(serialization.Encoding.DER)))}\n</X509Certificate>"
-                    for c in chain)
-    return (f'<Signature xmlns="{DSIG}" Id="{sig_id}">' + _signed_info(files, prop_digest, False)
-            + f"<SignatureValue>{_b64(sig)}</SignatureValue>"
-            + f"<KeyInfo><X509Data>{certs}</X509Data></KeyInfo>"
-            + _prop_object(sig_id, False) + "</Signature>").encode()
+    certs = "".join(
+        f"<X509Certificate>\n{_wrap76(_b64(c.public_bytes(serialization.Encoding.DER)))}\n</X509Certificate>"
+        for c in chain
+    )
+    return (
+        f'<Signature xmlns="{DSIG}" Id="{sig_id}">'
+        + _signed_info(files, prop_digest, False)
+        + f"<SignatureValue>{_b64(sig)}</SignatureValue>"
+        + f"<KeyInfo><X509Data>{certs}</X509Data></KeyInfo>"
+        + _prop_object(sig_id, False)
+        + "</Signature>"
+    ).encode()
 
 
 def _load_p12(path, password):
@@ -92,7 +108,8 @@ def _load_p12(path, password):
 
 def sign_wgt(src_dir_or_wgt, out_path, cert_dir):
     """Sign a directory or an existing .wgt and write a signed .wgt to out_path."""
-    password = open(os.path.join(cert_dir, "password.txt")).read().strip()
+    with open(os.path.join(cert_dir, "password.txt")) as f:
+        password = f.read().strip()
     author_key, author_chain = _load_p12(os.path.join(cert_dir, "author.p12"), password)
     dist_key, dist_chain = _load_p12(os.path.join(cert_dir, "distributor.p12"), password)
 
@@ -104,7 +121,8 @@ def sign_wgt(src_dir_or_wgt, out_path, cert_dir):
                 rel = os.path.relpath(full, src_dir_or_wgt).replace(os.sep, "/")
                 if rel in SIG_FILES or n.startswith(".") or rel.startswith(".sign/"):
                     continue
-                files.append((rel, open(full, "rb").read()))
+                with open(full, "rb") as f:
+                    files.append((rel, f.read()))
     else:
         with zipfile.ZipFile(src_dir_or_wgt) as z:
             for info in z.infolist():
@@ -114,7 +132,9 @@ def sign_wgt(src_dir_or_wgt, out_path, cert_dir):
     files.sort(key=lambda f: f[0])
 
     author = _signature("AuthorSignature", files, author_key, author_chain)
-    dist = _signature("DistributorSignature", [("author-signature.xml", author)] + files, dist_key, dist_chain)
+    dist = _signature(
+        "DistributorSignature", [("author-signature.xml", author), *files], dist_key, dist_chain
+    )
 
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:

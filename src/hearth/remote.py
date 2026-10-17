@@ -3,6 +3,7 @@
 The first connection shows an Allow/Deny prompt on the TV; the token it returns
 is cached so later connections are silent.
 """
+
 import base64
 import json
 import os
@@ -20,13 +21,16 @@ def info(host):
     try:
         return json.load(urllib.request.urlopen(f"http://{host}:8001/api/v2/", timeout=5))["device"]
     except OSError as e:
-        raise SystemExit(f"Can't reach the TV at {host} ({getattr(e, 'reason', e)}). "
-                         "Is it on and finished booting?")
+        raise SystemExit(
+            f"Can't reach the TV at {host} ({getattr(e, 'reason', e)}). Is it on and finished booting?"
+        ) from e
 
 
 def app_status(host, app_id):
     try:
-        return json.load(urllib.request.urlopen(f"http://{host}:8001/api/v2/applications/{app_id}", timeout=3))
+        return json.load(
+            urllib.request.urlopen(f"http://{host}:8001/api/v2/applications/{app_id}", timeout=3)
+        )
     except Exception:
         return None
 
@@ -49,8 +53,7 @@ class Remote:
         token = self._token()
         if token:
             url += f"&token={token}"
-        self.ws = websocket.create_connection(url, timeout=self.timeout,
-                                              sslopt={"cert_reqs": ssl.CERT_NONE})
+        self.ws = websocket.create_connection(url, timeout=self.timeout, sslopt={"cert_reqs": ssl.CERT_NONE})
         msg = json.loads(self.ws.recv())
         if msg.get("event") != "ms.channel.connect":
             raise RuntimeError(f"TV refused the remote connection: {msg.get('event')}")
@@ -74,16 +77,39 @@ class Remote:
 
     def key(self, key, times=1, delay=0.25):
         for _ in range(times):
-            self.ws.send(json.dumps({"method": "ms.remote.control", "params": {
-                "Cmd": "Click", "DataOfCmd": key, "Option": "false",
-                "TypeOfRemote": "SendRemoteKey"}}))
+            self.ws.send(
+                json.dumps(
+                    {
+                        "method": "ms.remote.control",
+                        "params": {
+                            "Cmd": "Click",
+                            "DataOfCmd": key,
+                            "Option": "false",
+                            "TypeOfRemote": "SendRemoteKey",
+                        },
+                    }
+                )
+            )
             time.sleep(delay)
 
     def hold(self, key, seconds=1.0):
         """Press and hold a remote button (e.g. a long-press on OK)."""
+
         def send(cmd):
-            self.ws.send(json.dumps({"method": "ms.remote.control", "params": {
-                "Cmd": cmd, "DataOfCmd": key, "Option": "false", "TypeOfRemote": "SendRemoteKey"}}))
+            self.ws.send(
+                json.dumps(
+                    {
+                        "method": "ms.remote.control",
+                        "params": {
+                            "Cmd": cmd,
+                            "DataOfCmd": key,
+                            "Option": "false",
+                            "TypeOfRemote": "SendRemoteKey",
+                        },
+                    }
+                )
+            )
+
         send("Press")
         time.sleep(seconds)
         send("Release")
@@ -98,6 +124,15 @@ class Remote:
             self.key(key, times, delay)
 
     def launch(self, app_id):
-        self.ws.send(json.dumps({"method": "ms.channel.emit", "params": {
-            "event": "ed.apps.launch", "to": "host",
-            "data": {"appId": app_id, "action_type": "DEEP_LINK"}}}))
+        self.ws.send(
+            json.dumps(
+                {
+                    "method": "ms.channel.emit",
+                    "params": {
+                        "event": "ed.apps.launch",
+                        "to": "host",
+                        "data": {"appId": app_id, "action_type": "DEEP_LINK"},
+                    },
+                }
+            )
+        )
