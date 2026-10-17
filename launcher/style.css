@@ -205,3 +205,5 @@ body.editing .topbar, body.editing main { visibility: hidden; }
 .name-pill input { width: 260px; font: inherit; font-size: 26px; color: #fff; background: transparent; border: 0; border-bottom: 2px solid #4a4a50; outline: none; padding: 4px 2px; }
 .name-pill input::placeholder { color: #77777f; }
 .name-pill.focused input, .name-pill input:focus { border-bottom-color: var(--focus); }
+.date[hidden] { display: none; }
+#time-formats { margin-bottom: 18px; }

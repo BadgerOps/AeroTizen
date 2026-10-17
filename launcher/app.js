@@ -36,7 +36,7 @@
 
   var $ = function (id) { return document.getElementById(id); };
   var allApps = [], favorites = [], appOrder = [], sources = [], background = 'black';
-  var FIRE = '__fire', realAppIds = [], tempUnit = 'auto', bgSpeed = 1, previewing = false, inputNames = {};
+  var FIRE = '__fire', realAppIds = [], tempUnit = 'auto', bgSpeed = 1, previewing = false, inputNames = {}, dateFormat = 'weekday', timeFormat = '12';
   var rows = [], row = 1, col = [];
   var editing = false, editIndex = 0;
 
@@ -48,20 +48,43 @@
         localStorage.setItem(STORE, localStorage.getItem('declutter.home.v5'));
       }
       var s = JSON.parse(localStorage.getItem(STORE)) || {};
-      favorites = s.favorites || []; appOrder = s.order || []; background = s.background || 'aurora'; tempUnit = s.tempUnit || 'auto'; bgSpeed = s.speed || 1; inputNames = s.inputNames || {};
+      favorites = s.favorites || []; appOrder = s.order || []; background = s.background || 'aurora'; tempUnit = s.tempUnit || 'auto'; bgSpeed = s.speed || 1; inputNames = s.inputNames || {}; dateFormat = s.dateFormat || 'weekday'; timeFormat = s.timeFormat || '12';
     } catch (e) {}
   }
   function save() {
-    try { localStorage.setItem(STORE, JSON.stringify({ favorites: favorites, order: appOrder, background: background, tempUnit: tempUnit, speed: bgSpeed, inputNames: inputNames })); } catch (e) {}
+    try { localStorage.setItem(STORE, JSON.stringify({ favorites: favorites, order: appOrder, background: background, tempUnit: tempUnit, speed: bgSpeed, inputNames: inputNames, dateFormat: dateFormat, timeFormat: timeFormat })); } catch (e) {}
   }
 
   function applyBackground() { window.Backgrounds.setSpeed(bgSpeed); window.Backgrounds.apply(background); }
 
   // ---- clock ---------------------------------------------------------------
+  var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  // Date formats offered in Settings (formatted by hand so every TV shows the same thing).
+  var DATE_FORMATS = [
+    ['weekday', function (d) { return DAYS[d.getDay()] + ' ' + d.getDate(); }],
+    ['short', function (d) { return DAYS[d.getDay()].slice(0, 3) + ', ' + MONTHS[d.getMonth()].slice(0, 3) + ' ' + d.getDate(); }],
+    ['long', function (d) { return DAYS[d.getDay()] + ', ' + MONTHS[d.getMonth()] + ' ' + d.getDate(); }],
+    ['dmy', function (d) { return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear(); }],
+    ['mdy', function (d) { return pad(d.getMonth() + 1) + '/' + pad(d.getDate()) + '/' + d.getFullYear(); }],
+    ['iso', function (d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }],
+    ['none', function () { return ''; }]
+  ];
+  function formatDate(d, id) {
+    for (var i = 0; i < DATE_FORMATS.length; i++) { if (DATE_FORMATS[i][0] === id) { return DATE_FORMATS[i][1](d); } }
+    return DATE_FORMATS[0][1](d);
+  }
+  function formatTime(d, fmt) {
+    if (fmt === '24') { return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+    var h = d.getHours() % 12 || 12;
+    return h + ':' + pad(d.getMinutes()) + (d.getHours() < 12 ? ' am' : ' pm');
+  }
   function tick() {
     var d = new Date();
-    $('date').textContent = d.toLocaleDateString([], { weekday: 'long' }) + ' ' + d.getDate();
-    $('time').textContent = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }).toLowerCase();
+    $('date').textContent = formatDate(d, dateFormat);
+    $('date').hidden = dateFormat === 'none';
+    $('time').textContent = formatTime(d, timeFormat);
   }
 
   // ---- data ----------------------------------------------------------------
@@ -474,6 +497,22 @@
       b.onclick = function () { tempUnit = u[0]; save(); window.Weather.refresh(); renderEditor(); };
       units.appendChild(b);
     });
+    var now = new Date();
+    var times = $('time-formats'); times.textContent = '';
+    [['12', formatTime(now, '12') + '  (12-hour)'], ['24', formatTime(now, '24') + '  (24-hour)']].forEach(function (t) {
+      var b = document.createElement('div'); b.className = 'pill unit' + (timeFormat === t[0] ? ' on' : ''); b.dataset.key = 'time:' + t[0];
+      b.textContent = t[1];
+      b.onclick = function () { timeFormat = t[0]; save(); tick(); renderEditor(); };
+      times.appendChild(b);
+    });
+    var dates = $('date-formats'); dates.textContent = '';
+    DATE_FORMATS.forEach(function (f) {
+      var b = document.createElement('div'); b.className = 'pill unit' + (dateFormat === f[0] ? ' on' : ''); b.dataset.key = 'date:' + f[0];
+      b.textContent = f[0] === 'none' ? 'No date' : f[1](now);
+      b.onclick = function () { dateFormat = f[0]; save(); tick(); renderEditor(); };
+      dates.appendChild(b);
+    });
+
     // Input names: OK opens the TV's on-screen keyboard; empty resets to the TV's own name.
     var names = $('input-names'); names.textContent = '';
     sources.filter(function (src) { return src.type !== 'TV'; }).forEach(function (src) {
@@ -516,7 +555,7 @@
     function kids(id) { return [].slice.call($(id).children); }
     var rowsOut = chunk(kids('bg-anim'), 8);
     if (!$('speed-row').hidden) { rowsOut.push(kids('speed-row')); }
-    return rowsOut.concat(chunk(kids('bg-still'), 8), [kids('units')], [kids('input-names')], chunk(kids('all-apps'), 5), [[$('escape')]]);
+    return rowsOut.concat(chunk(kids('bg-still'), 8), [kids('units')], [kids('time-formats')], [kids('date-formats')], [kids('input-names')], chunk(kids('all-apps'), 5), [[$('escape')]]);
   }
   var eKey = null;  // focus follows the item, so re-rendering (e.g. the slider appearing) doesn't jump
   function focusEditor() {
