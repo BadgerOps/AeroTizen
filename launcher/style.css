@@ -65,7 +65,9 @@ h2 { font-size: 39px; font-weight: 500; margin: 0 0 18px; }
 .grid3 { display: flex; flex-wrap: wrap; gap: 30px 32px; margin: 6px 0 40px; }
 .grid3 .tile { width: 576px; height: 300px; }
 .medium .tile { width: 333px; height: 187px; }
-.small .tile { width: 228px; height: 129px; justify-content: flex-start; padding: 0 20px; gap: 18px; }
+/* Inputs share the row width (3 line up with the app grid; more shrink evenly). */
+#inputs { gap: 32px; }
+.small .tile { flex: 1 1 0; min-width: 0; max-width: 576px; height: 124px; justify-content: flex-start; padding: 0 28px; gap: 22px; }
 
 .tile .logo { flex: 0 0 auto; object-fit: contain; }
 .grid3 .tile .logo { width: 150px; height: 150px; }
@@ -77,12 +79,12 @@ h2 { font-size: 39px; font-weight: 500; margin: 0 0 18px; }
 .grid .tile.logo-big .logo { width: 300px; height: 150px; }
 .medium .tile.logo-only .logo { width: 210px; height: 106px; }
 .grid .tile.logo-only .logo { width: 210px; height: 106px; }
-.small .tile .logo, .small .tile svg { width: 64px; height: 64px; border-radius: 10px; }
+.small .tile .logo, .small .tile svg { flex: 0 0 auto; width: 72px; height: 72px; border-radius: 12px; }
 
 .tile .name { font-weight: 500; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.35); max-width: 60%; line-height: 1.1; }
 .grid3 .tile .name { font-size: 60px; }
 .medium .tile .name { font-size: 36px; }
-.small .tile .name { font-size: 26px; font-weight: 400; color: #e6e6ea; max-width: 120px; }
+.small .tile .name { font-size: 30px; font-weight: 500; color: #f0f0f3; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tile.nologo .name { max-width: 88%; text-align: center; }
 .grid3 .tile.nologo .name { font-size: 72px; font-weight: 700; }
 .medium .tile.nologo .name { font-size: 46px; font-weight: 700; }
@@ -143,7 +145,7 @@ h2 { font-size: 39px; font-weight: 500; margin: 0 0 18px; }
 @keyframes nudge { from { transform: translate(0,0); } to { transform: translate(var(--dx), var(--dy)); } }
 
 /* inputs: device name over port, empty ports dimmed */
-.small .tile .name .sub { font-size: 19px; color: var(--muted); margin-top: 4px; }
+.small .tile .name .sub { font-size: 21px; font-weight: 400; color: var(--muted); margin-top: 4px; }
 .small .tile.off { opacity: .42; }
 .small .tile.off.focused { opacity: .8; }
 .grid { display: flex; flex-wrap: wrap; gap: 26px 22px; width: 1792px; }
