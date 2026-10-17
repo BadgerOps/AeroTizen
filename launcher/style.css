@@ -209,3 +209,6 @@ body.editing .topbar, body.editing main { visibility: hidden; }
 .name-pill.focused input, .name-pill input:focus { border-bottom-color: var(--focus); }
 .date[hidden] { display: none; }
 #time-formats { margin-bottom: 18px; }
+/* "Show in app menu": apps not on the home screen are dimmed until switched on */
+.grid .tile:not(.on):not(.addapps) { opacity: .5; }
+.grid .tile:not(.on):not(.addapps).focused { opacity: .85; }

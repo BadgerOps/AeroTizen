@@ -10,7 +10,7 @@
   // Everything else getAppsInfo returns (~460 entries) is firmware plumbing.
   var STORE_PKG = /^[A-Za-z0-9]{10}$/;
   var PRELOADED = { 'org.tizen.netflix-app': '3201907018807', 'org.tizen.primevideo': '3201910019365' };
-  var JUNK = /service|emanual|companion|dummy|widget|tizenbrew|DclHome001/i;
+  var JUNK = /service|emanual|companion|dummy|widget|DclHome001/i;
   var FIRE_VIDEO = 'WuHSBSLK3_A';
 
   // Android-TV-style banners: brand background, official logo (from logos.js), optional wordmark.
@@ -450,7 +450,7 @@
     $('toast').hidden = true;
   }
 
-  // ---- settings sheet: background, favorites, and the tucked-away escape ------
+  // ---- settings sheet: background, which apps show in the app menu, and the escape ----
   var eRow = 0, eCol = [0, 0, 0];
   var SPEED_MIN = 0.25, SPEED_MAX = 3, SPEED_STEP = 0.25;
   function openEditor() { editing = true; document.body.classList.add('editing'); $('editor').hidden = false; eRow = 0; eCol = [0, 0, 0]; eKey = 'bg:' + background; renderEditor(); }
