@@ -1,14 +1,14 @@
-"""hearth: clean up a Samsung Tizen TV from your computer.
+"""aerotizen: clean up a Samsung Tizen TV from your computer.
 
-  hearth discover            find TVs on your network
-  hearth status              model, Developer Mode, sdb capabilities
-  hearth apps                list installed packages, classified
-  hearth debloat             pick packages to remove, then remove them
-  hearth debloat --remove PKGID[,PKGID...] [--yes]
-  hearth certs               sign in to Samsung, create signing certs for this TV
-  hearth install PATH        sign + install an app folder or .wgt (e.g. launcher)
-  hearth key KEY_VOLUP [n]   press a remote button
-  hearth launch APPID        open an app
+  aerotizen discover            find TVs on your network
+  aerotizen status              model, Developer Mode, sdb capabilities
+  aerotizen apps                list installed packages, classified
+  aerotizen debloat             pick packages to remove, then remove them
+  aerotizen debloat --remove PKGID[,PKGID...] [--yes]
+  aerotizen certs               sign in to Samsung, create signing certs for this TV
+  aerotizen install PATH        sign + install an app folder or .wgt (e.g. launcher)
+  aerotizen key KEY_VOLUP [n]   press a remote button
+  aerotizen launch APPID        open an app
 
 Add --tv IP to target a specific TV (otherwise the first one found is used).
 """
@@ -20,8 +20,8 @@ import os
 import sys
 from collections import OrderedDict
 
-from hearth import catalog, discover, remote
-from hearth.sdb import Sdb, SdbError
+from aerotizen import catalog, discover, remote
+from aerotizen.sdb import Sdb, SdbError
 
 STATE_DIR = remote.CONFIG_DIR
 
@@ -172,7 +172,7 @@ def cert_dir_for(duid):
 
 
 def cmd_certs(args):
-    from hearth import certs
+    from aerotizen import certs
 
     host = pick_tv(args)
     with require_sdb(host) as s:
@@ -203,7 +203,7 @@ def app_id_of(src):
 
 
 def cmd_install(args):
-    from hearth import signer
+    from aerotizen import signer
 
     host = pick_tv(args)
     s = require_sdb(host)
@@ -238,7 +238,7 @@ def cmd_launch(args):
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="hearth", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+        prog="aerotizen", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("--tv", help="TV IP address")
     sub = parser.add_subparsers(dest="cmd", required=True)

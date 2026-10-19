@@ -1,4 +1,4 @@
-from hearth import catalog
+from aerotizen import catalog
 
 
 def _block(app_id, title, tizen_id, package, removable=1):

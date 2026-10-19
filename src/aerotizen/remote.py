@@ -13,8 +13,8 @@ import urllib.request
 
 import websocket
 
-CLIENT_NAME = base64.b64encode(b"hearth").decode()
-CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".config", "hearth")
+CLIENT_NAME = base64.b64encode(b"AeroTizen").decode()
+CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".config", "aerotizen")
 
 
 def info(host):

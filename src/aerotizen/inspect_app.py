@@ -1,6 +1,6 @@
 """Launch an app on the TV with its web inspector and expose it on localhost.
 
-  python3 -m hearth.inspect_app <tv-ip> DclHome001.Home [9222]
+  aerotizen-inspect <tv-ip> DclHome001.Home [9222]
 
 Then open http://localhost:9222/json for the DevTools target, or point a
 Chrome DevTools Protocol client at it. Ctrl+C to stop.
@@ -10,7 +10,7 @@ import sys
 import time
 import urllib.request
 
-from hearth.sdb import Sdb
+from aerotizen.sdb import Sdb
 
 
 def main():

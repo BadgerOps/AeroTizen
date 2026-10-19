@@ -6,7 +6,7 @@ import threading
 
 import pytest
 
-from hearth import sdb
+from aerotizen import sdb
 
 
 def _frame(cmd, arg0, arg1, payload=b""):
@@ -42,12 +42,26 @@ class FakeTV:
         self.port = self.server.getsockname()[1]
         threading.Thread(target=self._run, daemon=True).start()
 
+    def close(self):
+        for sock in (getattr(self, "conn", None), self.server):
+            if sock is not None:
+                sock.close()
+
     def _run(self):
-        conn, _ = self.server.accept()
+        try:
+            self.conn, _ = self.server.accept()
+        except OSError:
+            return  # closed before a client connected
+        self._serve(self.conn)
+
+    def _serve(self, conn):
         remote_id = 100
         sync = {}
         while True:
-            frame = _read_frame(conn)
+            try:
+                frame = _read_frame(conn)
+            except OSError:
+                return
             if frame is None:
                 return
             cmd, arg0, arg1, payload = frame
@@ -90,4 +104,13 @@ class FakeTV:
 
 @pytest.fixture
 def fake_tv():
-    return FakeTV
+    made = []
+
+    def make(replies=None):
+        tv = FakeTV(replies)
+        made.append(tv)
+        return tv
+
+    yield make
+    for tv in made:
+        tv.close()

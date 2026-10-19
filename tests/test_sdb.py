@@ -1,4 +1,4 @@
-from hearth.sdb import Sdb, SdbError
+from aerotizen.sdb import Sdb, SdbError
 
 
 def test_handshake_reads_banner(fake_tv):

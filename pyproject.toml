@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "hearth-tv"
+name = "aerotizen"
 dynamic = ["version"]
 description = "Debloat a Samsung Tizen TV, block ads, and install a clean, fast home screen, from your computer."
 readme = "README.md"
@@ -25,16 +25,17 @@ classifiers = [
 dev = ["pytest>=8", "ruff>=0.6", "lxml>=5"]
 
 [project.scripts]
-hearth = "hearth.cli:main"
+aerotizen = "aerotizen.cli:main"
+aerotizen-inspect = "aerotizen.inspect_app:main"
 
 [tool.setuptools.dynamic]
-version = { attr = "hearth.__version__" }
+version = { attr = "aerotizen.__version__" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-hearth = ["ca/*"]
+aerotizen = ["ca/*"]
 
 [tool.ruff]
 line-length = 110
@@ -47,4 +48,4 @@ ignore = ["SIM105"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q"
+addopts = "-q -W error"

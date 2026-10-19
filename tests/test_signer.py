@@ -13,7 +13,7 @@ from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.serialization import pkcs12
 from cryptography.x509.oid import NameOID
 
-from hearth import signer
+from aerotizen import signer
 
 
 @pytest.fixture

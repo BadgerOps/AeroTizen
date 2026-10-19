@@ -40,7 +40,7 @@ Requires Python 3.9+. Add `--tv <ip>` to any command if you have more than one T
 hearth certs
 ```
 This opens Samsung's sign-in page. After you sign in, certificates for this TV's DUID are
-saved to `~/.config/hearth/certs/`.
+saved to `~/.config/aerotizen/certs/`.
 
 ### 3. Install the launcher and TizenBrew
 ```bash
@@ -107,9 +107,9 @@ are welcome.
 ## Developer tools
 
 ```bash
-python3 -m hearth.inspect_app <tv-ip> DclHome001.Home   # debug-launch + DevTools on localhost:9222
-python3 -m hearth.cdp shot tv.png                        # screenshot the running app
-python3 -m hearth.cdp eval "document.title"              # run JS inside it
+aerotizen-inspect <tv-ip> DclHome001.Home   # debug-launch + DevTools on localhost:9222
+python3 -m aerotizen.cdp shot tv.png                        # screenshot the running app
+python3 -m aerotizen.cdp eval "document.title"              # run JS inside it
 ```
 
 The inspector runs over the same single sdb connection (the TV allows only one).
