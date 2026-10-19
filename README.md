@@ -57,7 +57,7 @@ Other 2020+ Samsung TVs should work; please [report your model](../../issues/new
 
 ## Setup
 
-You need a computer on the same network as the TV, with Python 3.9+.
+You need a computer on the same network as the TV, with Python 3.10+.
 
 **1. Install the CLI**
 ```bash

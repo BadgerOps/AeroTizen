@@ -10,7 +10,7 @@ readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Hamza El Alaoui" }]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = ["websocket-client>=1.6", "cryptography>=41"]
 keywords = ["samsung", "tizen", "smart-tv", "launcher", "debloat", "sdb"]
 classifiers = [
@@ -39,7 +39,7 @@ aerotizen = ["ca/*"]
 
 [tool.ruff]
 line-length = 110
-target-version = "py39"
+target-version = "py310"
 src = ["src", "tests"]
 
 [tool.ruff.lint]

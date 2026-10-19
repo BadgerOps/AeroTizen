@@ -22,7 +22,7 @@ def discover(timeout=3):
             data, (ip, _port) = sock.recvfrom(4096)
             if re.search(rb"samsung", data, re.I):
                 hosts.add(ip)
-    except socket.timeout:
+    except TimeoutError:
         pass
     finally:
         sock.close()
