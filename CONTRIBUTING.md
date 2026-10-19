@@ -1,8 +1,8 @@
 # Contributing
 
-Thanks for helping make Samsung TVs less annoying. The most valuable thing you can do is
-**test on your own TV** and open a "Tested on my TV" issue: every model and firmware year
-behaves a little differently.
+Thanks for taking a look. If you only do one thing, try it on your TV and open a
+"Tested on my TV" issue. Every model and firmware year behaves a bit differently, and I only
+have one TV to test on.
 
 ## Development setup
 

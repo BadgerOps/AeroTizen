@@ -1,125 +1,125 @@
 # AeroTizen
 
-**A clean, fast, ad-free home screen for Samsung Tizen TVs, plus the tools to debloat the TV from your computer.**
+A simple home screen for Samsung TVs, and a command-line tool to clean the TV up from your computer.
 
 ![AeroTizen home screen](docs/screenshots/home.png)
 
-## Motivation
+## Why I made this
 
-A new Samsung TV is a great panel wrapped in a cluttered interface: sponsored rows, "Top Picks
-for You", Samsung TV Plus autoplaying at boot, a viewing tracker (ACR) on by default, and
-hundreds of preinstalled background components. Android TV owners can swap the launcher and
-debloat over ADB. Samsung owners can't: Tizen has no launcher API, no shell, and almost no
-tooling outside Samsung's heavyweight SDK.
+I bought a 65" Samsung DU7200 and the home screen was mostly ads. There was a "Top Picks for You"
+row I couldn't remove, Samsung TV Plus started playing on its own at boot, and the TV tracks what
+you watch unless you dig through the privacy menus to turn it off.
 
-AeroTizen is the closest thing to that for Tizen. It installs a minimal home screen as a regular
-app, makes it the first thing you see, and gives you a small command-line tool to clean up the
-rest: no Tizen Studio, no rooting, nothing to flash.
+On Android TV you'd install a different launcher and remove the junk over ADB. Samsung's Tizen
+doesn't let you do either. There's no way to replace the home screen, no shell, and the official
+developer tools are a huge SDK that doesn't even run natively on Apple Silicon.
 
-## What you get
+So I built my own. AeroTizen is a normal TV app that acts as the home screen: it opens when the
+TV turns on and comes back when you press Home. The CLI handles the setup (certificates, signing,
+installing) and lets you see and remove preinstalled apps. You don't need Tizen Studio or root.
 
-**On the TV**
-- A 3-across grid of your apps with official logos, and your inputs underneath
-- Starts at power-on and comes back when you press Home ([details](#limits))
-- Hold OK on a tile to move it
-- Inputs show every HDMI port with the connected device's name (renameable)
-- 31 backgrounds, 16 animated (adjustable speed, live preview)
-- Clock, weather and city in the top bar (°F/°C, 12/24-hour, several date styles)
-- Network status (Ethernet, Wi-Fi strength, offline)
-- Fireplace tile: a fireplace video, with a built-in animated fire as fallback
-- Settings: choose which installed apps appear, open the Samsung app store, or hand
-  control back to Samsung Home
+## Features
 
-**From your computer** (`aerotizen` CLI)
-- Finds the TV on your network and pairs as a remote
-- Talks to the TV's developer port in pure Python (no Samsung SDK, works on macOS/Linux/Windows)
-- Creates Samsung signing certificates for your TV (one Samsung account sign-in)
-- Signs and installs any app (`.wgt`), including the launcher
-- Lists installed apps and flags bloat; removes it where the firmware allows
+On the TV:
 
-**Guides**
-- [Settings to turn off](docs/settings.md) (ads, viewing-data tracking, autorun)
-- [DNS blocklists](dns/) for Pi-hole, AdGuard Home or NextDNS
+- Your apps in a 3-column grid with their real logos, inputs underneath
+- Opens at power-on and comes back on Home (see [Limits](#limits))
+- Hold OK on a tile to move it around
+- Inputs list every HDMI port and the name of what's plugged in. You can rename them
+- 31 backgrounds, 16 of them animated, with a speed slider and preview
+- Time, date, weather and your city in the top bar, in the format you pick
+- Shows whether the TV is on Ethernet or Wi-Fi
+- A Fireplace tile that plays a fireplace video
+- Settings to choose which apps show up, open the Samsung app store, or go back to Samsung's home screen
 
-| Settings | Move a tile | Snowfall | Lava |
+From your computer (`aerotizen`):
+
+- Finds the TV on your network
+- Connects to the TV's developer port directly in Python, on macOS, Linux or Windows
+- Creates the Samsung signing certificates for your TV (you sign in to your Samsung account once)
+- Signs and installs any `.wgt` app, including the launcher
+- Lists installed apps, flags the bloat, and removes it if your firmware allows
+
+There's also a short [guide to the settings worth turning off](docs/settings.md) (ads, viewing
+data, autorun) and [DNS blocklists](dns/) if you run Pi-hole, AdGuard Home or NextDNS.
+
+| Settings | Moving a tile | Snowfall | Lava |
 |---|---|---|---|
-| ![Settings](docs/screenshots/settings.png) | ![Moving a tile](docs/screenshots/move.png) | ![Snowfall theme](docs/screenshots/theme-snowfall.png) | ![Lava theme](docs/screenshots/theme-lava.png) |
+| ![Settings](docs/screenshots/settings.png) | ![Moving a tile](docs/screenshots/move.png) | ![Snowfall](docs/screenshots/theme-snowfall.png) | ![Lava](docs/screenshots/theme-lava.png) |
 
-<sub>Device names and weather in the screenshots are examples.</sub>
+The device names and weather in these screenshots are placeholders.
 
 ## Tested on
 
 | TV | Year | Firmware |
 |---|---|---|
-| Samsung 65" Crystal UHD **DU7200** (UN65DU7200FXZA) | 2024 | Tizen 9.0 |
+| Samsung 65" Crystal UHD DU7200 (UN65DU7200FXZA) | 2024 | Tizen 9.0 |
 
-Other 2020+ Samsung TVs should work; please [report your model](../../issues/new?template=model_report.yml).
+It should work on other Samsung TVs from 2020 on, but I've only tested this one. If you try it on
+yours, [let me know how it went](../../issues/new?template=model_report.yml).
 
 ## Setup
 
-You need a computer on the same network as the TV, with Python 3.10+.
+You need a computer on the same network as the TV, with Python 3.10 or newer.
 
-**1. Install the CLI**
-```bash
-pip install git+https://github.com/helalaou/AeroTizen
-aerotizen discover
-```
+1. Install the CLI and check that it finds your TV:
 
-**2. Turn on Developer Mode** (once, on the TV)
-1. Open **Apps**, then type `1 2 3 4 5` (use the remote's **123** button if it has no number keys).
-2. Turn **Developer mode** on and set **Host PC IP** to your computer's IP. Press **OK**.
-3. **Unplug the TV for a minute.** A normal power-off doesn't apply the change.
-4. `aerotizen status` should show `developerMode=1`.
+   ```bash
+   pip install git+https://github.com/helalaou/AeroTizen
+   aerotizen discover
+   ```
 
-**3. Create certificates** (once per TV)
-```bash
-aerotizen certs
-```
-This opens Samsung's sign-in page. Certificates are saved to `~/.config/aerotizen/`.
+2. Turn on Developer Mode on the TV. Open **Apps**, type `12345` on the remote (or with the
+   on-screen number pad), switch Developer mode on, and set Host PC IP to your computer's IP.
+   Then unplug the TV for a minute. Turning it off with the remote isn't enough for the change to
+   apply. `aerotizen status` should now show `developerMode=1`.
 
-**4. Install the launcher**
-```bash
-git clone https://github.com/helalaou/AeroTizen && cd AeroTizen
-aerotizen install launcher
-```
-The TV now starts on AeroTizen. Press the gear for settings.
+3. Create the certificates. This opens Samsung's sign-in page in your browser:
 
-**Optional: clean up apps**
-```bash
-aerotizen apps        # what's installed, classified
-aerotizen debloat     # pick what to remove
-```
+   ```bash
+   aerotizen certs
+   ```
+
+4. Install the launcher:
+
+   ```bash
+   git clone https://github.com/helalaou/AeroTizen && cd AeroTizen
+   aerotizen install launcher
+   ```
+
+That's it. The TV will start on AeroTizen from now on, and the gear icon opens settings.
+
+To look at or remove installed apps, run `aerotizen apps` and `aerotizen debloat`.
 
 ## Limits
 
-Samsung doesn't allow third-party home screens or system changes, so some things are best-effort:
+Samsung doesn't support any of this officially, so some parts are workarounds:
 
-- **Home button:** a background service brings AeroTizen back within ~1–2 s. It works on boot,
-  from Samsung Home and inside Netflix. Inside YouTube, Prime Video, Stremio and Spotify,
-  Samsung doesn't report whether the app is on screen, so Home stays on Samsung's menu there.
-  **Back** always returns to AeroTizen.
-- **Uninstalling:** Tizen 6+ refuses removal of store and preinstalled apps over the developer
-  port. Use **Apps → ⚙️ → Delete** on the TV. System apps (TV Plus, Gaming Hub) can only be disabled.
-- **Resolution:** Samsung renders all apps at 1920×1080 and upscales to the panel; only video is native 4K.
-- **Samsung's own UI** (menus, settings, ads in its screens) can't be modified; see the
-  [settings guide](docs/settings.md) and [DNS lists](dns/) for what you can switch off.
+- Pressing Home brings AeroTizen back after a second or two. That works from Samsung's home
+  screen and inside Netflix, but not inside YouTube, Prime Video, Stremio or Spotify. Those apps
+  don't report whether they're on screen, so there's no way to tell. Back still works everywhere.
+- On Tizen 6 and newer, store and preinstalled apps can't be removed over the developer
+  connection. You can delete them on the TV under Apps → Settings. Samsung's system apps (TV Plus,
+  Gaming Hub) can only be disabled.
+- TV apps are drawn at 1920×1080 and upscaled, even on a 4K panel. Only video plays at full 4K.
+- Samsung's own menus and screens can't be changed. The [settings guide](docs/settings.md) and
+  [DNS lists](dns/) cover what you can switch off.
 
 ## Contributing
 
-This started as a fix for one TV. It would be great if people helped turn it into a better
-experience for every Samsung TV, beyond the bloat and full-screen ads Tizen ships with.
-Testing on your model is the most useful contribution. Ideas, fixes and new themes are all welcome.
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+I made this for my own TV, but I'd love for it to work well on more of them and to get further
+away from the ads and clutter Tizen ships with. The most helpful thing is trying it on your TV
+and reporting what works. Pull requests are welcome too. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Credits
 
-- [LTvLauncher](https://github.com/leanbitlab-org/LtvLauncher): layout inspiration
-- [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung) and [tizen-sdb](https://github.com/PatrickSt1991/tizen-sdb) (MIT): reference for the sdb protocol, certificate flow and signing
-- [samsung-tizen-tv-debloat](https://github.com/ardazeytin/samsung-tizen-tv-debloat) (MIT): package safety rules
-- [Simple Icons](https://simpleicons.org) (CC0): app logos; trademarks belong to their owners
-- [Open-Meteo](https://open-meteo.com) and [ipapi](https://ipapi.co): weather and location
+- [LTvLauncher](https://github.com/leanbitlab-org/LtvLauncher), which the layout is based on
+- [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung) and [tizen-sdb](https://github.com/PatrickSt1991/tizen-sdb), for how the developer connection, certificates and signing work
+- [samsung-tizen-tv-debloat](https://github.com/ardazeytin/samsung-tizen-tv-debloat), for which packages are safe to remove
+- App logos from [Simple Icons](https://simpleicons.org) (trademarks belong to their owners)
+- Weather from [Open-Meteo](https://open-meteo.com), location from [ipapi](https://ipapi.co)
 
-Not affiliated with Samsung. Use at your own risk.
+This project isn't affiliated with Samsung. Use it at your own risk.
 
 ## License
 
