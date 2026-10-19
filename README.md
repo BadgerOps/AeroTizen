@@ -4,19 +4,20 @@ A simple home screen for Samsung TVs, and a command-line tool to clean the TV up
 
 ![AeroTizen home screen](docs/screenshots/home.png)
 
-## Why I made this
+## Motivation
 
-I bought a 65" Samsung DU7200 and the home screen was mostly ads. There was a "Top Picks for You"
-row I couldn't remove, Samsung TV Plus started playing on its own at boot, and the TV tracks what
-you watch unless you dig through the privacy menus to turn it off.
+The default home screen on recent Samsung TVs is mostly ads. The "Top Picks for You" row can't be
+removed, Samsung TV Plus starts playing on its own at boot, and the TV tracks what you watch unless
+you find the privacy settings to turn it off.
 
-On Android TV you'd install a different launcher and remove the junk over ADB. Samsung's Tizen
-doesn't let you do either. There's no way to replace the home screen, no shell, and the official
-developer tools are a huge SDK that doesn't even run natively on Apple Silicon.
+On Android TV you would install a different launcher and remove the junk over ADB. Tizen allows
+neither: there's no way to replace the home screen, no shell, and the official developer tools are
+a large SDK that doesn't run natively on Apple Silicon.
 
-So I built my own. AeroTizen is a normal TV app that acts as the home screen: it opens when the
-TV turns on and comes back when you press Home. The CLI handles the setup (certificates, signing,
-installing) and lets you see and remove preinstalled apps. You don't need Tizen Studio or root.
+AeroTizen works around that. The launcher is a normal TV app that acts as the home screen: it opens
+when the TV turns on and comes back when you press Home. The CLI handles the setup (certificates,
+signing, installing) and shows which preinstalled apps can be removed. Tizen Studio and root
+access aren't needed.
 
 ## Features
 
@@ -55,8 +56,8 @@ The device names and weather in these screenshots are placeholders.
 |---|---|---|
 | Samsung 65" Crystal UHD DU7200 (UN65DU7200FXZA) | 2024 | Tizen 9.0 |
 
-It should work on other Samsung TVs from 2020 on, but I've only tested this one. If you try it on
-yours, [let me know how it went](../../issues/new?template=model_report.yml).
+Other Samsung TVs from 2020 on should work, but this is the only model tested so far. If you try it
+on yours, please [open a model report](../../issues/new?template=model_report.yml).
 
 ## Setup
 
@@ -107,9 +108,10 @@ Samsung doesn't support any of this officially, so some parts are workarounds:
 
 ## Contributing
 
-I made this for my own TV, but I'd love for it to work well on more of them and to get further
-away from the ads and clutter Tizen ships with. The most helpful thing is trying it on your TV
-and reporting what works. Pull requests are welcome too. See [CONTRIBUTING.md](CONTRIBUTING.md).
+The goal is a home screen that works well on every Samsung TV and gets as far as possible from the
+ads and clutter Tizen ships with. Help is welcome, especially testing on other models: a model
+report saying what works and what doesn't is the most useful contribution. Pull requests for
+fixes, new themes or features are welcome too. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Credits
 

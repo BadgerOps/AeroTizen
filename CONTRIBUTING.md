@@ -1,8 +1,8 @@
 # Contributing
 
-Thanks for taking a look. If you only do one thing, try it on your TV and open a
-"Tested on my TV" issue. Every model and firmware year behaves a bit differently, and I only
-have one TV to test on.
+Thanks for taking a look. The most useful contribution is trying AeroTizen on your TV and
+opening a "Tested on my TV" issue: every model and firmware year behaves a bit differently, and
+so far only one model has been tested.
 
 ## Development setup
 
