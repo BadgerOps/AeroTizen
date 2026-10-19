@@ -212,3 +212,4 @@ body.editing .topbar, body.editing main { visibility: hidden; }
 /* "Show in app menu": apps not on the home screen are dimmed until switched on */
 .grid .tile:not(.on):not(.addapps) { opacity: .5; }
 .grid .tile:not(.on):not(.addapps).focused { opacity: .85; }
+.status-icon.offline { color: #ff6b6b; }
