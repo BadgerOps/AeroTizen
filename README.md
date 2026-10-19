@@ -26,7 +26,7 @@ On the TV:
 - Opens at power-on and comes back on Home (see [Limits](#limits))
 - Hold OK on a tile to move it around
 - Inputs list every HDMI port and the name of what's plugged in. You can rename them
-- 31 backgrounds, 16 of them animated, with a speed slider and preview
+- 31 backgrounds, 16 of them animated, with a speed slider and preview (for example [Snowfall](docs/screenshots/theme-snowfall.png) and [Lava](docs/screenshots/theme-lava.png))
 - Time, date, weather and your city in the top bar, in the format you pick
 - Shows whether the TV is on Ethernet or Wi-Fi
 - A Fireplace tile that plays a fireplace video
@@ -43,9 +43,9 @@ From your computer (`aerotizen`):
 There's also a short [guide to the settings worth turning off](docs/settings.md) (ads, viewing
 data, autorun) and [DNS blocklists](dns/) if you run Pi-hole, AdGuard Home or NextDNS.
 
-| Settings | Moving a tile | Snowfall | Lava |
-|---|---|---|---|
-| ![Settings](docs/screenshots/settings.png) | ![Moving a tile](docs/screenshots/move.png) | ![Snowfall](docs/screenshots/theme-snowfall.png) | ![Lava](docs/screenshots/theme-lava.png) |
+| Settings | Moving a tile |
+|---|---|
+| ![Settings](docs/screenshots/settings.png) | ![Moving a tile](docs/screenshots/move.png) |
 
 The device names and weather in these screenshots are placeholders.
 
