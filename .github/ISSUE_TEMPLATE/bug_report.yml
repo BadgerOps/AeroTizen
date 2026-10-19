@@ -1,0 +1,27 @@
+name: Bug report
+description: Something doesn't work as described
+labels: [bug]
+body:
+  - type: input
+    id: model
+    attributes:
+      label: TV model and year
+      placeholder: e.g. UN65DU7200FXZA (2024)
+    validations:
+      required: true
+  - type: input
+    id: tizen
+    attributes:
+      label: Tizen version
+      description: "`platform_version` from `aerotizen status`"
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Command output
+      render: shell
