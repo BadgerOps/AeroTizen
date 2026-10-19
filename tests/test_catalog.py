@@ -44,7 +44,7 @@ def test_non_removable_and_infrastructure_are_protected():
     assert catalog.classify(locked) == "protected"
     infra = {"appid": "ZODRT12q2l.WebAccountExtension", "pkgid": "ZODRT12q2l", "name": "WebAccount"}
     assert catalog.classify(infra) == "protected"
-    own = {"appid": "DclHome001.Home", "pkgid": "DclHome001", "name": "Hearth", "removable": True}
+    own = {"appid": "DclHome001.Home", "pkgid": "DclHome001", "name": "AeroTizen", "removable": True}
     assert catalog.classify(own) == "protected"
 
 

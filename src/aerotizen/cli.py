@@ -210,7 +210,7 @@ def cmd_install(args):
     duid, tool_path = s.duid(), s.capability().get("sdk_toolpath", "/home/owner/share/tmp/sdk_tools")
     cdir = cert_dir_for(duid)
     if not os.path.exists(os.path.join(cdir, "distributor.p12")):
-        sys.exit(f"No certificates for this TV yet. Run: hearth --tv {host} certs")
+        sys.exit(f"No certificates for this TV yet. Run: aerotizen --tv {host} certs")
     app_id = app_id_of(args.src)
     signed = os.path.join(STATE_DIR, f"{app_id.split('.')[0]}-signed.wgt")
     signer.sign_wgt(args.src, signed, cdir)
