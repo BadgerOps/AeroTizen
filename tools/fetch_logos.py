@@ -28,7 +28,7 @@ SLUGS = {
     "primevideo": "13.0.0",
     "hulu": "9.0.0",
 }
-OUT = os.path.join(os.path.dirname(__file__), "..", "launcher", "logos.js")
+OUT = os.path.join(os.path.dirname(__file__), "..", "launcher", "js", "logos.js")
 
 
 def main():
