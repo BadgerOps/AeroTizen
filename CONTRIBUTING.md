@@ -23,6 +23,15 @@ npm run lint
 npm test           # launcher tests: tests/*.test.cjs, run in a Node sandbox
 ```
 
+Run the local watcher tests with Node.js 18 or newer:
+
+```bash
+npm run test:watcher
+```
+
+These tests use mock clocks and network replies. They cover the Art Mode protocol, fresh
+status checks, relaunch cancellation and app visibility. They do not contact a TV.
+
 ## Project layout
 
 | Path | What |
