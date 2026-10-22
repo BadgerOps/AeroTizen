@@ -59,6 +59,7 @@ The device names and weather in these screenshots are placeholders.
 |---|---|---|
 | Samsung 65" Crystal UHD DU7200 (UN65DU7200FXZA) | 2024 | Tizen 9.0 |
 | Samsung 65" The Frame LS03D (QE65LS03DAUXXU) | 2024 | Tizen 9.0 |
+| Samsung 65" OLED S90C (QE65S90CATXZT) | 2023 | Tizen 7.0 |
 
 Other Samsung TVs from 2020 on should work, but these are the only models tested so far. If you try it
 on yours, please [open a model report](../../issues/new?template=model_report.yml).
