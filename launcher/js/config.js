@@ -33,7 +33,7 @@ AeroTizen.config = {
   SPEED: { MIN: 0.25, MAX: 3, STEP: 0.25 },
 
   DEFAULTS: {
-    home: [],
+    home: null,  // null selects defaults on first launch; [] keeps an empty Home.
     background: 'aurora',
     speed: 1,
     tempUnit: 'auto',

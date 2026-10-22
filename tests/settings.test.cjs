@@ -24,6 +24,11 @@ test('defaults apply when nothing is saved', () => {
   const { settings } = loadSettings({});
   assert.equal(settings.background, 'aurora');
   assert.equal(settings.tempUnit, 'auto');
+  assert.equal(settings.home, null, 'null picks the default tiles on first launch');
+});
+
+test('an empty saved Home stays empty', () => {
+  const { settings } = loadSettings({ 'aerotizen.settings.v1': JSON.stringify({ home: [] }) });
   assert.deepEqual(JSON.parse(JSON.stringify(settings.home)), []);
 });
 

@@ -15,7 +15,6 @@
     grid.textContent = '';
     if (page === 'home') {
       home = home.filter(function (id) { return id === cfg.FIREPLACE_ID || A.apps.byId(id); });
-      if (home.indexOf(cfg.FIREPLACE_ID) < 0) { home.unshift(cfg.FIREPLACE_ID); }
       A.settings.home = home;
     } else {
       home = A.apps.all.map(function (app) { return app.id; });

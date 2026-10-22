@@ -160,7 +160,7 @@
     });
   }
 
-  // Every real app on the TV; OK shows or hides it on the home screen.
+  // Home tiles: the built-in Fireplace and every real app on the TV.
   function renderAppMenu() {
     var box = A.$('all-apps');
     box.textContent = '';
@@ -169,8 +169,15 @@
     add.innerHTML = A.tiles.ICONS.plus + '<div class="name">Add apps<div class="sub">Samsung app store</div></div>';
     add.onclick = A.apps.openStore;
     box.appendChild(add);
-    A.apps.all.forEach(function (app) {
-      var tile = A.tiles.banner(app, S.home.indexOf(app.id) >= 0 ? 'on' : '');
+    [{ id: cfg.FIREPLACE_ID, name: 'Fireplace' }].concat(A.apps.all).forEach(function (app) {
+      var tile;
+      if (app.id === cfg.FIREPLACE_ID) {
+        tile = A.tiles.card(app.name, A.tiles.ICONS.flame);
+        tile.classList.add('fire');
+      } else {
+        tile = A.tiles.banner(app);
+      }
+      tile.classList.toggle('on', S.home.indexOf(app.id) >= 0);
       tile.dataset.key = 'app:' + app.id;
       tile.onclick = function () {
         var i = S.home.indexOf(app.id);
