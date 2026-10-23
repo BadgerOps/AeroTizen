@@ -36,11 +36,11 @@ AeroTizen.config = {
     cardSize: 'big',
     background: 'aurora',
     speed: 1,
-    tempUnit: 'auto',
+    tempUnit: null,  // Select the locale's weather unit when first loaded.
     weatherLocation: null,
     weatherShowLocation: true,
-    dateFormat: 'weekday',
-    timeFormat: '12',
+    dateFormat: 'short',
+    timeFormat: null,  // Detect 12/24-hour format when first loaded.
     showLiveTv: true,
     hideDisconnectedHdmi: false,
     inputNames: {}
