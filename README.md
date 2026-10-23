@@ -1,6 +1,17 @@
 # AeroTizen
 
+[![CI](https://github.com/helalaou/AeroTizen/actions/workflows/ci.yml/badge.svg)](https://github.com/helalaou/AeroTizen/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Contributors](https://img.shields.io/github/contributors/helalaou/AeroTizen)](https://github.com/helalaou/AeroTizen/graphs/contributors)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
 A simple home screen for Samsung TVs, and a command-line tool to clean the TV up from your computer.
+
+Built with help from these contributors. [Join them](CONTRIBUTING.md): testing on your TV counts too.
+
+<a href="https://github.com/helalaou/AeroTizen/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=helalaou/AeroTizen" alt="AeroTizen contributors">
+</a>
 
 ![AeroTizen home screen on a Samsung TV](docs/screenshots/app-cards-samsung-tv.png)
 
