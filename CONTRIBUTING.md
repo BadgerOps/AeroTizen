@@ -6,6 +6,15 @@ only a handful of models have been tested so far.
 
 ## Development setup
 
+With Nix, enter the repository's pinned development environment:
+
+```bash
+nix develop
+npm ci
+```
+
+Without Nix, install the same tools manually:
+
 ```bash
 git clone https://github.com/helalaou/AeroTizen
 cd AeroTizen
