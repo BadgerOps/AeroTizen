@@ -1,5 +1,5 @@
 // The Settings sheet: backgrounds (+ speed slider and preview), weather, date and
-// time formats, HDMI visibility, input names, which apps show on the home screen, and an escape
+// time formats, network and HDMI visibility, input names, which apps show on the home screen, and an escape
 // back to Samsung Home.
 (function (A) {
   'use strict';
@@ -18,6 +18,21 @@
   function changed(after) { S.save(); if (after) { after(); } render(); }
 
   // ---- sections ------------------------------------------------------------------
+  function renderVisibility(id, setting, labels, after) {
+    var box = A.$(id);
+    box.textContent = '';
+    [true, false].forEach(function (show, index) {
+      var key = id + ':' + show;
+      var selected = (S[setting] !== false) === show;
+      var control = pill(key, labels[index], selected, function () {
+        S[setting] = show; focusKey = key; changed(after);
+      });
+      control.setAttribute('role', 'button');
+      control.setAttribute('aria-pressed', String(selected));
+      box.appendChild(control);
+    });
+  }
+
   function renderBackgrounds() {
     var anim = A.$('bg-anim'), still = A.$('bg-still'), selected = null;
     anim.textContent = ''; still.textContent = '';
@@ -84,6 +99,7 @@
   }
 
   function renderWeather() {
+    renderVisibility('weather-display', 'showWeather', ['Show weather', 'Hide weather'], window.Weather.updateVisibility);
     var box = A.$('weather-location'), visibility = A.$('weather-visibility');
     A.$('weather-location-summary').textContent = S.weatherLocation ?
       'Location: ' + (S.weatherLocation.label || S.weatherLocation.name) :
@@ -129,9 +145,11 @@
     var dateStyle = A.clock.dateStyle(S.dateFormat);
     times.textContent = ''; dates.textContent = '';
     [['12', '(12-hour)'], ['24', '(24-hour)']].forEach(function (t) {
-      times.appendChild(pill('time:' + t[0], A.clock.formatTime(now, t[0]) + '  ' + t[1], S.timeFormat === t[0],
-        function () { S.timeFormat = t[0]; changed(A.clock.tick); }));
+      times.appendChild(pill('time:' + t[0], A.clock.formatTime(now, t[0]) + '  ' + t[1], S.showTime !== false && S.timeFormat === t[0],
+        function () { S.showTime = true; S.timeFormat = t[0]; focusKey = 'time:' + t[0]; changed(A.clock.tick); }));
     });
+    times.appendChild(pill('time:none', 'No time', S.showTime === false,
+      function () { S.showTime = false; focusKey = 'time:none'; changed(A.clock.tick); }));
     A.clock.DATE_FORMATS.forEach(function (f) {
       dates.appendChild(pill('date:' + f.id, f.id === 'none' ? 'No date' : f.format(now), dateStyle === f.id,
         function () { S.dateFormat = f.id; changed(A.clock.tick); }));
@@ -217,7 +235,9 @@
   }
 
   function render() {
-    renderBackgrounds(); renderWeather(); renderUnits(); renderDateTime(); renderCardSizes(); renderInputVisibility(); renderInputNames(); renderAppMenu();
+    renderBackgrounds(); renderWeather(); renderUnits(); renderDateTime();
+    renderVisibility('network-visibility', 'showNetwork', ['Show', 'Hide'], A.network.updateVisibility);
+    renderCardSizes(); renderInputVisibility(); renderInputNames(); renderAppMenu();
     focus();
   }
 
@@ -234,8 +254,10 @@
     var r = A.chunk(kids('bg-anim'), 8);
     if (!A.$('speed-row').hidden) { r.push(kids('speed-row')); }
     var results = kids('weather-results').map(function (el) { return [el]; });
-    return r.concat(A.chunk(kids('bg-still'), 8), [kids('weather-location')], results, [kids('weather-visibility')],
-      [kids('units')], [kids('time-formats')], dateRows, [kids('card-sizes')], [kids('live-tv-visibility')], [kids('input-visibility')],
+    return r.concat(A.chunk(kids('bg-still'), 8), [kids('weather-display')],
+      [kids('weather-location')], results, [kids('weather-visibility')],
+      [kids('units')], [kids('time-formats')], dateRows, [kids('network-visibility')],
+      [kids('live-tv-visibility')], [kids('card-sizes')], [kids('input-visibility')],
       [kids('input-names')], A.chunk(kids('all-apps'), 5), [[A.$('escape')]]).filter(function (row) { return row.length; });
   }
 

@@ -6,7 +6,10 @@ const vm = require('node:vm');
 
 function runtime({ locale = 'en-GB', time, intl = Intl, saved = {}, legacy = false, measure } = {}) {
   const storage = new Map([[legacy ? 'hearth.home.v1' : 'aerotizen.settings.v1', JSON.stringify(saved)]]);
-  const elements = { date: {}, time: { setAttribute(name, value) { this[name] = value; } } };
+  const elements = { date: {}, time: {
+    parentNode: { classList: { toggle() {} } },
+    setAttribute(name, value) { this[name] = value; }
+  } };
   if (measure) { elements.time.style = {}; }
   const A = { $: (id) => elements[id] };
   const context = vm.createContext({

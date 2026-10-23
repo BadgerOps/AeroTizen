@@ -36,6 +36,9 @@ AeroTizen.config = {
     cardSize: 'big',
     background: 'aurora',
     speed: 1,
+    showWeather: true,
+    showTime: true,
+    showNetwork: true,
     tempUnit: null,  // Select the locale's weather unit when first loaded.
     weatherLocation: null,
     weatherShowLocation: true,

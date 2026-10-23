@@ -44,10 +44,11 @@ On the TV:
   disconnected ports or the Live TV tile
 - 31 backgrounds, 16 of them animated, with a speed slider and preview (for example [Snowfall](docs/screenshots/theme-snowfall.png) and [Lava](docs/screenshots/theme-lava.png))
 - Time, date and weather in the top bar. Date and time follow the TV's language and 12/24-hour
-  setting, and °C or °F is picked from your region. You can change any of them in Settings
+  setting, and °C or °F is picked from your region. You can change their formats or visibility
+  in Settings
 - Weather for a town you search for, or an approximate location from your internet address. The
   place name can be hidden
-- Shows whether the TV is on Ethernet or Wi-Fi
+- Shows whether the TV is on Ethernet or Wi-Fi. Show or hide it in **Settings → Network indicator**
 - An optional Fireplace tile that plays a fireplace video
 - Works on The Frame: AeroTizen leaves Art Mode alone
 - Settings to choose which apps show up, open the Samsung app store, or go back to Samsung's home screen
@@ -112,6 +113,13 @@ You need a computer on the same network as the TV, with Python 3.10 or newer.
    ```
 
 That's it. The TV will start on AeroTizen from now on, and the gear icon opens settings.
+
+In **Settings → Weather**, choose **Show weather** or **Hide weather**. Hiding weather
+stops automatic location and forecast requests, while keeping your saved location and
+units. In **Date & time**, choose **No time** or **No date** to hide either item; selecting
+a format shows it again. **Network indicator** has its own **Show** and **Hide** controls.
+All three header items are shown by default. Choices apply at once and stay saved after
+a restart.
 
 For accurate weather, open **Settings → Weather** and search for your town or postcode.
 
